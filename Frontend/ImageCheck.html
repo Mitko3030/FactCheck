@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CheckAI — ImageCheck</title>
+  <link rel="stylesheet" href="imagecheck.css" />
+</head>
+<body>
+  <header class="ic-header">
+    <a class="back" href="index.html" aria-label="Back"><span class="arrow">←</span> Back</a>
+    <div class="logo">CheckAI</div>
+  </header>
+
+  <main class="ic-main">
+    <section class="upload-card">
+      <h1 class="card-title">ImageCheck</h1>
+
+      <div class="dropzone" id="dropzone" tabindex="0">
+        <div class="dz-inner">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M12 3v10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M8 7l4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <p class="dz-text">Drag & Drop an image here</p>
+          <p class="dz-sub">or</p>
+          <button class="btn browse">Browse Files</button>
+        </div>
+
+        <!-- Scanning overlay (CSS-only; toggled via `data-scanning` attribute) -->
+        <div class="scanning-overlay" aria-hidden="true"></div>
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-item"><strong>Image Resolution</strong><span id="meta-res">—</span></div>
+        <div class="meta-item"><strong>File Type</strong><span id="meta-type">—</span></div>
+        <div class="meta-item"><strong>Metadata Status</strong><span id="meta-meta">—</span></div>
+      </div>
+
+      <div class="analyze-wrap">
+        <button class="btn analyze full">Analyze Image</button>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>

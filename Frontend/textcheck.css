@@ -1,0 +1,52 @@
+:root{
+  --bg: #0f1a1a;
+  --teal: #2a7a8a;
+  --muted: rgba(234,247,247,0.92);
+  --dark: #0b1111;
+}
+
+*{box-sizing:border-box}
+body{margin:0; font-family: Inter, Roboto, system-ui, -apple-system, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--muted);}
+
+.tc-header{position:sticky; top:0; display:flex; align-items:center; justify-content:space-between; padding:.75rem 1rem; background:rgba(0,0,0,0.12); border-bottom:1px solid rgba(255,255,255,0.03)}
+.tc-header .logo{font-weight:700; color:#fff}
+
+/* Left back button (rounded pill) to match FactCheck style */
+.tc-header .back{
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  text-decoration:none;
+  background: rgba(255,255,255,0.03);
+  color: #ffffff;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.tc-header .back:hover{ background: rgba(255,255,255,0.05); }
+.tc-header .back .arrow{ font-weight:700 }
+
+.tc-main{display:grid; grid-template-columns:1fr 360px; gap:1.25rem; align-items:start; padding:1.25rem;}
+
+.col-left textarea{width:100%; min-height:60vh; max-height:80vh; resize:vertical; padding:1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.03); background:rgba(255,255,255,0.02); color:var(--muted); font-size:1rem}
+
+.controls{display:flex; align-items:center; justify-content:space-between; margin-top:.6rem}
+.controls #charcount{opacity:.9}
+.btn.analyze{background:var(--teal); color:#fff; border:none; padding:.6rem 1rem; border-radius:10px; font-weight:700}
+.btn.analyze:hover{transform:translateY(-4px)}
+
+.col-right{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008)); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.03); min-height:200px}
+.dashboard-empty{color:rgba(255,255,255,0.6); text-align:center; padding:3rem 1rem}
+
+.metric{margin-bottom:1rem}
+.metric-header{display:flex; justify-content:space-between; font-weight:700; margin-bottom:.5rem}
+.progress{height:12px; background:#162122; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.02)}
+.progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--teal), #1f6f78); transition:width .6s ease}
+
+.details h4{margin:0 0 .25rem 0}
+.details p{margin:0; color:rgba(255,255,255,0.8)}
+
+/* Responsive: stack columns on small screens */
+@media (max-width:960px){ .tc-main{ grid-template-columns:1fr; } .col-right{ order:2 } }
+
+.sr-only{ position:absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap }

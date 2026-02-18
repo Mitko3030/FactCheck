@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CheckAI — FactCheck</title>
+  <link rel="stylesheet" href="factcheck.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="back" href="index.html" aria-label="Back to home">← Back</a>
+    <div class="logo">CheckAI</div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="center-col">
+      <div class="card">
+        <h1 class="page-title">FactCheck</h1>
+
+        <label for="claim" class="sr-only">Paste claim here</label>
+        <textarea id="claim" class="claim-input" placeholder="Paste claim here..."></textarea>
+
+        <div class="actions">
+          <button class="btn verify">Verify</button>
+        </div>
+
+        <div class="results" id="results">
+          <p class="results-empty">Results will appear here after verification.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>

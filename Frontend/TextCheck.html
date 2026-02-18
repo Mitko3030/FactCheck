@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CheckAI — TextCheck</title>
+  <link rel="stylesheet" href="textcheck.css" />
+</head>
+<body>
+  <header class="tc-header">
+    <a class="back" href="index.html" aria-label="Back"><span class="arrow">←</span> Back</a>
+    <div class="logo">CheckAI</div>
+  </header>
+
+  <main class="tc-main">
+    <section class="col-left">
+      <label for="longtext" class="sr-only">Paste or type text (max 5000 chars)</label>
+      <textarea id="longtext" maxlength="5000" placeholder="Paste or type text (up to 5000 characters)..."></textarea>
+
+      <div class="controls">
+        <span id="charcount">0 / 5000</span>
+        <button id="analyzeBtn" class="btn analyze">Analyze</button>
+      </div>
+    </section>
+
+    <aside class="col-right" id="dashboard">
+      <div class="dashboard-empty">Results dashboard — click Analyze to populate.</div>
+
+      <div class="dashboard-contents" hidden>
+        <div class="metric">
+          <div class="metric-header"><span>AI Probability</span><span id="aiPct">0%</span></div>
+          <div class="progress"><div class="progress-fill" id="aiFill" style="width:0%"></div></div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-header"><span>Objectivity Score</span><span id="objPct">0%</span></div>
+          <div class="progress"><div class="progress-fill" id="objFill" style="width:0%"></div></div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-header"><span>Reading Level</span><span id="readPct">0%</span></div>
+          <div class="progress"><div class="progress-fill" id="readFill" style="width:0%"></div></div>
+        </div>
+
+        <div class="details">
+          <h4>Summary</h4>
+          <p id="summary">—</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const ta = document.getElementById('longtext');
+    const charcount = document.getElementById('charcount');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const dashboard = document.getElementById('dashboard');
+    const contents = dashboard.querySelector('.dashboard-contents');
+    const empty = dashboard.querySelector('.dashboard-empty');
+
+    ta.addEventListener('input', ()=>{ charcount.textContent = `${ta.value.length} / 5000`; });
+
+    // Demo analyze: compute simple heuristics and animate fills
+    analyzeBtn.addEventListener('click', ()=>{
+      const text = ta.value.trim();
+      if(!text){ alert('Please enter some text to analyze.'); ta.focus(); return; }
+
+      // Simple heuristics for demo purposes
+      const words = text.split(/\s+/).filter(Boolean).length;
+      const avgWordLen = text.replace(/\s+/g,'').length / Math.max(words,1);
+      const aiProb = Math.min(95, Math.round(Math.min(1, (avgWordLen/6)) * 100 + (words>400?10:0)));
+      const objScore = Math.max(8, Math.round(100 - Math.min(80, (text.match(/[I|we|our|my|you|yours]/gi)||[]).length*8)));
+      const reading = Math.max(10, Math.min(100, Math.round((words/Math.max(1, text.split(/[\.\!\?]/).length)) )));
+
+      empty.hidden = true;
+      contents.hidden = false;
+
+      // animate fills
+      animateFill('aiFill','aiPct', aiProb);
+      animateFill('objFill','objPct', objScore);
+      animateFill('readFill','readPct', reading);
+
+      document.getElementById('summary').textContent = `Words: ${words} · Avg word length: ${avgWordLen.toFixed(1)}`;
+    });
+
+    function animateFill(fillId, pctId, target){
+      const el = document.getElementById(fillId);
+      const pct = document.getElementById(pctId);
+      let v = 0;
+      const iv = setInterval(()=>{
+        v += Math.max(1, Math.round(target/30));
+        if(v>=target){ v = target; clearInterval(iv); }
+        el.style.width = v + '%';
+        pct.textContent = v + '%';
+      }, 12);
+    }
+  </script>
+</body>
+</html>

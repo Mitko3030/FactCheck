@@ -1,58 +1,28 @@
-/*function GetText(){
+// Simple frontend logic: update placeholder based on mode and show a basic result message.
+document.addEventListener('DOMContentLoaded', ()=>{
+  const modeSelect = document.getElementById('modeSelect');
+  const input = document.getElementById('inputText');
+  const btn = document.getElementById('checkBtn');
+  const result = document.getElementById('result');
 
-    text = get_website_text("https://example.com", max_length=5000)
-}
+  function updatePlaceholder(){
+    const mode = modeSelect.value;
+    if(mode === 'image') input.placeholder = 'Enter an image URL or description';
+    else if(mode === 'text') input.placeholder = 'Paste or type the text to analyze';
+    else input.placeholder = 'Enter a statement';
+  }
 
+  modeSelect.addEventListener('change', ()=>{
+    updatePlaceholder();
+    result.textContent = '';
+  });
 
-POST /fetch-website
-{
-    "url": "https://example.com"
-}*/
-//Base URL of your backend (adjust if needed)
-const API_BASE_URL = 'http://localhost:8000';
+  btn.addEventListener('click', ()=>{
+    const mode = modeSelect.value;
+    const text = input.value.trim();
+    if(!text){ result.textContent = 'Please enter input to check.'; return; }
+    result.textContent = `Checking (${mode}) — "${text}" ... (demo)`;
+  });
 
-// Function to fetch text from a website
-async function fetchWebsiteText(url) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/fetch-website`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ url: url })
-        });
-        
-        const data = await response.json();
-        console.log('Website text:', data.text);
-        return data.text;
-    } catch (error) {
-        console.error('Error fetching website:', error);
-    }
-}
-
-// Function to analyze text
-async function analyzeText(text) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/analyze`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: text })
-        });
-        
-        const data = await response.json();
-        console.log('Analysis result:', data.analysis);
-        return data.analysis;
-    } catch (error) {
-        console.error('Error analyzing text:', error);
-    }
-}
-
-// Example usage
-document.getElementById('analyzeButton').addEventListener('click', async () => {
-    const url = document.getElementById('urlInput').value;
-    const text = await fetchWebsiteText(url);
-    const analysis = await analyzeText(text);
-    document.getElementById('result').textContent = JSON.stringify(analysis, null, 2);
+  updatePlaceholder();
 });
