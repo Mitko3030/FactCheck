@@ -29,7 +29,7 @@ body {
         line-height: 1.4;
     }
 
-    /* HERO: perfect centering via flexbox */
+
     .hero{
         display: flex;
         align-items: center;
@@ -89,7 +89,7 @@ body {
         border: 1px solid rgba(255,255,255,0.02);
     }
 
-    /* Hover: subtle lift + glow */
+    
     .nav-btn:hover,
     .nav-btn:focus{
         transform: translateY(-6px);
@@ -100,7 +100,6 @@ body {
         filter: saturate(1.05);
     }
 
-    /* Accessibility focus ring */
     .nav-btn:focus-visible{
         box-shadow:
             0 10px 30px rgba(0,0,0,0.6),
@@ -108,7 +107,7 @@ body {
             0 6px 18px rgba(31,122,140,0.18);
     }
 
-    /* Target sections styling (placeholders) */
+
     .target-section{
         padding: 6rem 1.25rem;
         min-height: 60vh;
@@ -117,7 +116,7 @@ body {
         color: rgba(234,247,247,0.92);
     }
 
-    /* Responsive: stack buttons on small screens */
+ 
     @media (max-width:560px){
         .mode-nav{ flex-direction: column; gap: 0.6rem; }
         .nav-btn{ width: 100%; min-width: 0; padding: 0.8rem 1rem; border-radius: 12px; }

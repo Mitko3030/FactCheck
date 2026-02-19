@@ -1,9 +1,9 @@
 :root{
-  --bg: #0f1a1a; /* requested background */
-  --teal: #2a7a8a; /* requested button color */
+  --bg: #0f1a1a; 
+  --teal: #2a7a8a; 
   --muted: #dfeef0;
   --card-bg: rgba(255,255,255,0.02);
-  --results-bg: #0c1112; /* dark charcoal */
+  --results-bg: #0c1112; 
 }
 
 *{box-sizing:border-box}
@@ -87,12 +87,11 @@ body{
 .results{ margin-top:1rem; background:var(--results-bg); padding:1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.02) }
 .results-empty{ margin:0; color:rgba(255,255,255,0.6) }
 
-/* Responsive */
+
 @media (max-width:720px){
   .claim-input{ min-height:160px }
   .actions{ justify-content:center }
   .verify{ width:100% }
 }
 
-/* Utility */
 .sr-only{ position:absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap }

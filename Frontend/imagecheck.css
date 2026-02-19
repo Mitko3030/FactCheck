@@ -12,13 +12,13 @@ body{margin:0; font-family: Inter, Roboto, system-ui, -apple-system, "Segoe UI",
 .ic-header{position:sticky; top:0; display:flex; align-items:center; justify-content:space-between; padding:.75rem 1rem; background:rgba(0,0,0,0.12); border-bottom:1px solid rgba(255,255,255,0.03);}
 .ic-header .logo{color:#fff; font-weight:700}
 
-/* Left back button (rounded pill) to match FactCheck style */
+
 .ic-header .back{
   display:inline-flex;
   align-items:center;
   gap:0.5rem;
   text-decoration:none;
-  background: rgba(255,255,255,0.03); /* slightly lighter than page */
+  background: rgba(255,255,255,0.03);
   color: #ffffff;
   padding: 0.45rem 0.8rem;
   border-radius: 999px;
@@ -48,7 +48,7 @@ body{margin:0; font-family: Inter, Roboto, system-ui, -apple-system, "Segoe UI",
 .btn.analyze{background:var(--teal); color:#071014; border:none; padding:.9rem 1rem; border-radius:10px; font-weight:800; width:100%; box-shadow:0 12px 34px rgba(42,122,138,0.12); transition:transform .18s ease}
 .btn.analyze:hover{transform:translateY(-6px); box-shadow:0 22px 54px rgba(42,122,138,0.18)}
 
-/* CSS-only scanning overlay: applied when dropzone has attribute data-scanning="true" */
+
 .dropzone[data-scanning="true"]{overflow:hidden}
 .scanning-overlay{position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:linear-gradient(90deg, rgba(42,122,138,0.06), rgba(255,255,255,0.02));}
 .dropzone[data-scanning="true"] .scanning-overlay{display:flex}
