@@ -5,6 +5,64 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CheckAI — FactCheck</title>
   <link rel="stylesheet" href="factcheck.css" />
+  <style>
+    /* Assistant & results styles added inline for simplicity */
+    #assistant{
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      display:flex;
+      align-items:flex-end;
+      gap:10px;
+      z-index:1000;
+      pointer-events:none;
+    }
+    #assistant img{ border-radius:12px; box-shadow:0 8px 18px rgba(0,0,0,0.15); }
+    #bubble{
+      max-width:260px;
+      background:linear-gradient(180deg,#ffffff,#f1f6ff);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow:0 6px 18px rgba(20,30,60,0.12);
+      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      font-size:14px;
+      color:#06223a;
+      transition:transform .25s ease,opacity .25s ease;
+      transform-origin:100% 100%;
+      pointer-events:auto;
+    }
+    #bubble.typing::after{
+      content:'\00a0';
+      display:inline-block;
+      width:18px;height:1em;
+      background:linear-gradient(90deg,#06223a,#06223a 40%,transparent 40%);
+      animation:blink 1s steps(2) infinite;
+      vertical-align:middle;
+      margin-left:6px;
+    }
+    @keyframes blink{50%{opacity:0.2}} 
+
+    /* Results card */
+    .result-card{
+      margin-top:16px;
+      border-radius:10px;
+      padding:12px 14px;
+      box-shadow:0 10px 30px rgba(10,20,40,0.06);
+      background:linear-gradient(180deg,#ffffff,#fbfdff);
+      opacity:0; transform:translateY(8px) scale(.995);
+      transition:opacity .28s ease,transform .28s cubic-bezier(.2,.9,.3,1);
+    }
+    .result-card.show{ opacity:1; transform:translateY(0) scale(1); }
+    .verdict{ font-weight:700; margin-bottom:6px; }
+    .verdict.true{ color: #127a3c; }
+    .verdict.false{ color: #b52222; }
+    .verdict.uncertain{ color: #a07b00; }
+    .confidence{ font-size:13px; color:#334; opacity:.8; }
+    .explain{ margin-top:8px; color:#243b4a; opacity:.9; line-height:1.35 }
+    .controls-row{ display:flex; gap:8px; align-items:center; margin-top:10px }
+    .btn:disabled{ opacity:.6; cursor:not-allowed }
+    .sr-only{ position:absolute; left:-9999px; }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -31,5 +89,155 @@
     </section>
   </main>
 
+<div id="assistant">
+  <img src="dog.jpg" width="120" onerror="this.style.display='none'">
+  <div id="bubble">Здравейте!</div>
+</div>
+
+<script>
+(function(){
+  const claimEl = document.getElementById('claim');
+  const verifyBtn = document.querySelector('.btn.verify');
+  const resultsEl = document.getElementById('results');
+  const bubbleEl = document.getElementById('bubble');
+
+  let speechEnabled = true;
+
+  function assistantSay(text, {typing=false, speakAloud=false} = {}){
+    if(typing){ bubbleEl.classList.add('typing'); }
+    else { bubbleEl.classList.remove('typing'); }
+
+    setTimeout(()=>{
+      bubbleEl.textContent = text;
+      bubbleEl.classList.remove('typing');
+      if(speakAloud && speechEnabled){ speakText(text, 'bg'); }
+    }, typing ? 500 : 0);
+  }
+
+  function speakText(text, preferredLang){
+    if(!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith((preferredLang||'bg').toLowerCase()));
+    if(voice) utter.voice = voice;
+    else utter.lang = preferredLang || 'bg-BG';
+    window.speechSynthesis.speak(utter);
+  }
+
+  function setLoading(isLoading){
+    verifyBtn.disabled = isLoading;
+    if(isLoading){ assistantSay('Проверявам фактите...', {typing:true, speakAloud:true}); }
+  }
+
+  function renderResult({verdict, confidence, explanation}){
+    resultsEl.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'result-card';
+
+    const v = document.createElement('div');
+    // Map Bulgarian/Mixed results to English classes (true/false/uncertain)
+    const normClass = verdict.toLowerCase().includes('вяр') || verdict.toLowerCase().includes('true') ? 'true' : 
+                      verdict.toLowerCase().includes('невяр') || verdict.toLowerCase().includes('false') ? 'false' : 'uncertain';
+    
+    v.className = 'verdict ' + normClass;
+    v.textContent = verdict;
+
+    const c = document.createElement('div');
+    c.className = 'confidence';
+    c.textContent = `Увереност: ${confidence}%`;
+
+    const e = document.createElement('div');
+    e.className = 'explain';
+    e.textContent = explanation;
+
+    card.appendChild(v);
+    card.appendChild(c);
+    card.appendChild(e);
+
+    const controls = document.createElement('div');
+    controls.className = 'controls-row';
+
+    const speakToggle = document.createElement('button');
+    speakToggle.className = 'btn';
+    speakToggle.textContent = speechEnabled ? '🔊 Глас вкл.' : '🔈 Глас изкл.';
+    speakToggle.onclick = ()=>{ speechEnabled = !speechEnabled; speakToggle.textContent = speechEnabled ? '🔊 Глас вкл.' : '🔈 Глас изкл.'; };
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn';
+    copyBtn.textContent = 'Копирай';
+    copyBtn.onclick = ()=>{ navigator.clipboard?.writeText(`${verdict} (${confidence}%) — ${explanation}`); };
+
+    controls.appendChild(speakToggle);
+    controls.appendChild(copyBtn);
+    card.appendChild(controls);
+    resultsEl.appendChild(card);
+
+    requestAnimationFrame(()=>{ card.classList.add('show'); });
+
+    let comment = verdict.toLowerCase().includes('вяр') ? 'Изглежда вярно.' : 
+                  verdict.toLowerCase().includes('невяр') ? 'Изглежда невярно.' : 'Не съм сигурен.';
+    assistantSay(comment, {typing:true, speakAloud:true});
+  }
+
+  async function onVerify(){
+    const claim = claimEl.value.trim();
+    if(!claim){ 
+      assistantSay('Моля, поставете твърдение.', {typing:true, speakAloud:true});
+      claimEl.focus();
+      return;
+    }
+    
+    setLoading(true);
+    resultsEl.innerHTML = `<div class="result-card show"><div class="verdict">Проверка…</div><div class="explain">Анализирам...</div></div>`;
+
+    try {
+      // FIX: Use absolute URL to avoid 405/404 when running from file://
+      const resp = await fetch('http://127.0.0.1:8000/fact-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim: claim })
+      });
+
+      if(!resp.ok) throw new Error(`Server error ${resp.status}`);
+
+      const data = await resp.json();
+      const raw = data.result || data;
+
+      const parsed = parseBackendResult(typeof raw === 'string' ? raw : String(raw));
+      renderResult(parsed || { verdict: 'Резултат', confidence: 100, explanation: String(raw) });
+
+    } catch(err) {
+      resultsEl.innerHTML = `<div class="result-card show"><div class="verdict false">Грешка</div><div class="explain">Неуспешно свързване. Проверете дали Uvicorn работи на порт 8000.</div></div>`;
+      assistantSay('Възникна грешка.', {typing:true, speakAloud:true});
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function parseBackendResult(text){
+    const verdictMatch = text.match(/(?:Verdict|Вердикт)\s*:\s*(.+)/i);
+    const confidenceMatch = text.match(/(?:Увереност|Confidence)\s*:\s*(\d{1,3})%/i);
+    const explanationMatch = text.match(/(?:Обяснение|Explanation)\s*:\s*([\s\S]+)/i);
+
+    if(verdictMatch || confidenceMatch || explanationMatch){
+      return {
+        verdict: verdictMatch ? verdictMatch[1].trim() : 'Анализ',
+        confidence: confidenceMatch ? parseInt(confidenceMatch[1],10) : 0,
+        explanation: explanationMatch ? explanationMatch[1].trim() : text
+      };
+    }
+    return null;
+  }
+
+  verifyBtn.addEventListener('click', onVerify);
+  claimEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ onVerify(); } });
+
+  window.addEventListener('load', ()=>{
+    assistantSay('Здравейте! Поставете твърдение за проверка.', {typing:true, speakAloud:true});
+  });
+})();
+</script>
 </body>
 </html>

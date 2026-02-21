@@ -4,7 +4,31 @@
     --background-color:#022B3A;
     --font-color:#faf0e6;
 }
+.logo-container {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
+.main-logo {
+    height: 80px; 
+    width: auto;
+    filter: drop-shadow(0 0 10px rgba(42, 122, 138, 0.3)); 
+    transition: transform 0.3s ease;
+}
+
+.main-logo:hover {
+    transform: scale(1.05);
+}
+
+
+.hero-inner {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 body {
     margin: 0;
     font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;

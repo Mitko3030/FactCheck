@@ -9,13 +9,23 @@ import requests
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+
+
+class FactInput(BaseModel):
+    claim: str
+# This MUST be the first middleware added
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # restrict in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Routes come AFTER middleware
+
+
 
 print("Loading models...")
 
@@ -39,7 +49,7 @@ model_path = hf_hub_download(
 
 llm = Llama(model_path=model_path, n_ctx=2048, n_threads=4, verbose=False)
 
-SERPER_API_KEY = "PUT_YOUR_KEY_HERE"
+SERPER_API_KEY = "3c6cba844457eff753d0c9cfd8cce7ffbf4b090e"
 
 print("All models loaded!")
 
@@ -122,6 +132,7 @@ Verdict: Вярно/Невярно
     return {
         "result": output["choices"][0]["text"].strip()
     }
+
 
 
 @app.get("/")

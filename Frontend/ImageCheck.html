@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="imagecheck.css" />
 </head>
 <body>
+
   <header class="ic-header">
     <a class="back" href="index.html" aria-label="Back"><span class="arrow">←</span> Back</a>
     <div class="logo">CheckAI</div>
@@ -17,19 +18,31 @@
       <h1 class="card-title">ImageCheck</h1>
 
       <div class="dropzone" id="dropzone" tabindex="0">
-        <div class="dz-inner">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M12 3v10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M8 7l4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+        
+        <div id="preview-area" style="display: none; width: 100%; z-index: 5;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <span id="file-name-display" style="font-size: 0.9rem; opacity: 0.7;"></span>
+            <button id="reset-btn" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:700;">Remove</button>
+          </div>
+          <img id="img-preview" src="" alt="Preview" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 8px;">
+        </div>
+
+        <div id="upload-prompt" class="dz-inner">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+            <path d="M12 3v10" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M8 7l4-4 4 4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
           </svg>
           <p class="dz-text">Drag & Drop an image here</p>
           <p class="dz-sub">or</p>
           <button class="btn browse">Browse Files</button>
+          
+          <input type="file" id="file-input" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;">
         </div>
 
-        <!-- Scanning overlay (CSS-only; toggled via `data-scanning` attribute) -->
-        <div class="scanning-overlay" aria-hidden="true"></div>
+        <div class="scanning-overlay" aria-hidden="true">
+            <div class="label">Scanning AI Patterns...</div>
+        </div>
       </div>
 
       <div class="meta-grid">
@@ -39,10 +52,94 @@
       </div>
 
       <div class="analyze-wrap">
-        <button class="btn analyze full">Analyze Image</button>
+        <button class="btn analyze" id="analyze-btn">Analyze Image</button>
       </div>
     </section>
   </main>
 
+  <script>
+    const fileInput = document.getElementById('file-input');
+const dropzone = document.getElementById('dropzone');
+const uploadPrompt = document.getElementById('upload-prompt');
+const previewArea = document.getElementById('preview-area');
+const imgPreview = document.getElementById('img-preview');
+const fileNameDisplay = document.getElementById('file-name-display');
+const resetBtn = document.getElementById('reset-btn');
+const analyzeBtn = document.getElementById('analyze-btn');
+
+// Meta labels
+const metaRes = document.getElementById('meta-res');
+const metaType = document.getElementById('meta-type');
+const metaStatus = document.getElementById('meta-meta');
+
+fileInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imgPreview.src = e.target.result;
+            fileNameDisplay.textContent = file.name;
+            uploadPrompt.style.display = 'none';
+            previewArea.style.display = 'block';
+            metaType.textContent = file.type.split('/')[1].toUpperCase();
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => { metaRes.textContent = `${this.width} × ${this.height}`; };
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// THE BACKEND CONNECTION
+analyzeBtn.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) return alert("Please upload an image first!");
+
+    // Start UI Animation
+    dropzone.setAttribute('data-scanning', 'true');
+    analyzeBtn.textContent = "Analyzing AI Patterns...";
+    analyzeBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('http://127.0.0.1:8000/detect-image', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        // Your model returns a list like: [{label: 'AI', score: 0.99}, ...]
+        // We find the one with the highest score
+        const topResult = data.result[0]; 
+        const isAI = topResult.label.toLowerCase().includes('ai');
+        const confidence = Math.round(topResult.score * 100);
+
+        // Update UI with Result
+        metaStatus.textContent = isAI ? `AI (${confidence}%)` : `Human (${confidence}%)`;
+        metaStatus.style.color = isAI ? "#ff4d4d" : "#2ea043";
+        
+        analyzeBtn.textContent = isAI ? "⚠️ AI GENERATED DETECTED" : "✅ HUMAN ORIGIN DETECTED";
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Could not connect to the AI server.");
+    } finally {
+        dropzone.setAttribute('data-scanning', 'false');
+        analyzeBtn.disabled = false;
+    }
+});
+
+resetBtn.addEventListener('click', () => {
+    fileInput.value = "";
+    uploadPrompt.style.display = 'flex';
+    previewArea.style.display = 'none';
+    metaStatus.textContent = "—";
+    metaStatus.style.color = "";
+    analyzeBtn.textContent = "Analyze Image";
+});
+  </script>
 </body>
 </html>
