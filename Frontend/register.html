@@ -10,7 +10,7 @@
     <section>
     <div class ="login-box">
         <form action="">
-            <h2>Log in</h2>
+            <h2>Register</h2>
             <div class="input-box">
                <span class="icon"><ion-icon name="mail"></ion-icon></span>
                 <input type="email" id="email" required>
@@ -21,15 +21,7 @@
                 <input type="password" id="password" required>
                 <label>Password</label>
             </div>
-          <div class="remember-forgot">
-            <label><input type="checkbox">Remember me</label>
-            <a href="#">Forgot Password?</a>
-        </div> 
-       <button type="button" onclick="loginUser()">Log in</button>
-        <div class="register-link">
-            <p>Don't have an account? <a href="register.html">Register</a></p>
-        </div>
-
+            <button type="button" onclick="registerUser()">Register</button>
         </form>
         
     </div>
@@ -38,7 +30,7 @@
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword }
+import { getAuth, createUserWithEmailAndPassword } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -53,19 +45,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-window.loginUser = function () {
+// Register function
+window.registerUser = function () {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  signInWithEmailAndPassword(auth, email, password)
+  createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      alert("Login successful!");
-      window.location.href = "Frontend/index.html";
+      alert("Registration successful!");
+      window.location.href = "index.html";
     })
     .catch((error) => {
       alert(error.message);
     });
-};
+};;
 </script>
 </body>
 </html>

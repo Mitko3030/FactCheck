@@ -1,8 +1,8 @@
 :root{
   --bg: #0f1a1a;
   --teal: #2a7a8a;
-  --muted: rgba(234,247,247,0.92);
-  --dark: #0b1111;
+  --muted: rgba(234,247,247,0.9);
+  --card: rgba(255,255,255,0.02);
 }
 
 *{box-sizing:border-box}
