@@ -5,16 +5,15 @@ from huggingface_hub import hf_hub_download
 from llama_cpp import Llama
 from PIL import Image
 import io
+import hashlib
+import asyncio
+import os
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-
-
-class FactInput(BaseModel):
-    claim: str
-# This MUST be the first middleware added
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,11 +22,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routes come AFTER middleware
+# ───── Schemas ─────
+class TextInput(BaseModel):
+    text: str
 
+class FactInput(BaseModel):
+    claim: str
 
+# ───── Thread pool ─────
+CPU_CORES = os.cpu_count() or 4
+executor = ThreadPoolExecutor(max_workers=CPU_CORES)
 
-print("Loading models...")
+# ───── In-memory cache ─────
+fact_cache = {}
+
+# ───── API Key ─────
+SERPER_API_KEY = "3c6cba844457eff753d0c9cfd8cce7ffbf4b090e"
+
+print("Зареждане на моделите...")
 
 # ───── Image detector ─────
 image_detector = pipeline(
@@ -41,100 +53,141 @@ text_detector = pipeline(
     model="fakespot-ai/roberta-base-ai-text-detection-v1"
 )
 
-# ───── Fact-check LLM ─────
+# ───── BgGPT LLM ─────
+print("Изтегляне на модела...")
 model_path = hf_hub_download(
     repo_id="INSAIT-Institute/BgGPT-Gemma-2-9B-IT-v1.0-GGUF",
     filename="BgGPT-Gemma-2-9B-IT-v1.0.Q4_K_M.gguf"
 )
 
-llm = Llama(model_path=model_path, n_ctx=2048, n_threads=4, verbose=False)
+print("Зареждане на модела...")
+llm = Llama(
+    model_path=model_path,
+    n_ctx=1024,
+    n_threads=CPU_CORES,
+    n_batch=512,
+    use_mlock=True,
+    verbose=False,
+)
 
-SERPER_API_KEY = "3c6cba844457eff753d0c9cfd8cce7ffbf4b090e"
+print("Всички модели са заредени!")
 
-print("All models loaded!")
 
-# ───── Schemas ─────
-class TextInput(BaseModel):
-    text: str
+# ───── Serper search with retry + fallback ─────
+def search_web(query: str) -> str:
+    # Try Bulgarian first, fall back to global if no results
+    for lang in (("bg", "bg"), ("us", "en")):
+        gl, hl = lang
+        for attempt in range(2):   # retry once on failure
+            try:
+                response = requests.post(
+                    "https://google.serper.dev/search",
+                    headers={
+                        "X-API-KEY": SERPER_API_KEY,
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "q": query,
+                        "gl": gl,
+                        "hl": hl,
+                        "num": 5,
+                        "lr": "lang_bg" if gl == "bg" else "lang_en"
+                    },
+                    timeout=6
+                )
 
-class FactInput(BaseModel):
-    claim: str
+                if not response.ok:
+                    break   # bad status, try next region
 
-# ───── Web search ─────
-def search_web(query):
-    try:
-        response = requests.post(
-            "https://google.serper.dev/search",
-            headers={
-                "X-API-KEY": SERPER_API_KEY,
-                "Content-Type": "application/json"
-            },
-            json={"q": query, "gl": "bg", "hl": "bg", "num": 5}
-        )
+                data = response.json()
+                snippets = []
 
-        data = response.json()
-        snippets = []
+                # Answer box is the most accurate — prioritise it
+                if data.get("answerBox"):
+                    box = data["answerBox"]
+                    if box.get("answer"):
+                        snippets.append(box["answer"])
+                    if box.get("snippet"):
+                        snippets.append(box["snippet"])
 
-        if data.get("answerBox"):
-            box = data["answerBox"]
-            if box.get("answer"):
-                snippets.append(box["answer"])
-            if box.get("snippet"):
-                snippets.append(box["snippet"])
+                for r in data.get("organic", [])[:4]:
+                    if r.get("snippet"):
+                        snippets.append(r["snippet"])
 
-        for r in data.get("organic", [])[:4]:
-            if r.get("snippet"):
-                snippets.append(r["snippet"])
+                if snippets:
+                    return " | ".join(snippets)
 
-        return " | ".join(snippets)
+            except requests.Timeout:
+                pass   # retry
+            except Exception:
+                break  # unexpected error, skip to next region
 
-    except Exception as e:
-        return f"Search error: {e}"
+    return "Няма намерена информация."
+
+
+# ───── BgGPT inference ─────
+def run_llm(claim: str) -> str:
+    search_result = search_web(claim)
+    print(f"📄 Намерено: {search_result[:200]}...")
+
+    context = search_result[:700]
+
+    prompt = f"""Провери следното твърдение като използваш само информацията по-долу.
+
+Информация: {context}
+
+Твърдение: {claim}
+
+Отговорът ти трябва да започва ЗАДЪЛЖИТЕЛНО с "Вярно" или "Невярно", последвано от тире и едно изречение.
+Забранено е да пишеш "Неясно", "Анализ" или каквото и да е друго в началото.
+Пример за правилен отговор: Вярно — България е държава в Европа.
+
+Отговор: """
+
+    output = llm(
+        prompt,
+        max_tokens=120,
+        temperature=0.1,
+        top_p=0.9,
+        repeat_penalty=1.1,
+        stop=["Твърдение:", "Информация:", "Неясно", "\n\n"]
+    )
+    return output["choices"][0]["text"].strip()
+
 
 # ───── Endpoints ─────
+
+@app.get("/")
+def home():
+    return {"status": "AI backend работи"}
+
 
 @app.post("/detect-image")
 async def detect_image(file: UploadFile = File(...)):
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
-
-    result = image_detector(image)
-
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(executor, image_detector, image)
     return {"result": result}
 
 
 @app.post("/detect-text")
-def detect_text(data: TextInput):
-    result = text_detector(data.text)
+async def detect_text(data: TextInput):
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(executor, text_detector, data.text)
     return {"result": result}
 
 
 @app.post("/fact-check")
-def fact_check(data: FactInput):
+async def fact_check(data: FactInput):
+    cache_key = hashlib.md5(data.claim.lower().strip().encode()).hexdigest()
+    if cache_key in fact_cache:
+        print("✅ Cache hit")
+        return fact_cache[cache_key]
 
-    context = search_web(data.claim)
+    loop = asyncio.get_event_loop()
+    result_text = await loop.run_in_executor(executor, run_llm, data.claim)
 
-    prompt = f"""
-Използвай САМО информацията:
-
-{context}
-
-Твърдение: {data.claim}
-
-Отговор:
-Verdict: Вярно/Невярно
-Увереност: X%
-Обяснение:
-"""
-
-    output = llm(prompt, max_tokens=300, temperature=0.1)
-
-    return {
-        "result": output["choices"][0]["text"].strip()
-    }
-
-
-
-@app.get("/")
-def home():
-    return {"status": "AI backend running"}
+    response = {"result": result_text}
+    fact_cache[cache_key] = response
+    return response

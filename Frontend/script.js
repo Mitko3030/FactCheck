@@ -1,40 +1,36 @@
-// API base — change only if backend runs elsewhere
+// API base — смени само ако backend-ът работи другаде
 const API_BASE = 'http://127.0.0.1:8000';
 
 document.addEventListener('DOMContentLoaded', () => {
 
     const modeSelect = document.getElementById('modeSelect');
-    const textInput = document.getElementById('inputText');
-    const btn = document.getElementById('checkBtn');
-    const result = document.getElementById('result');
+    const textInput  = document.getElementById('inputText');
+    const btn        = document.getElementById('checkBtn');
+    const result     = document.getElementById('result');
 
-    // Hidden image file input
+    // Скрит input за изображения
     const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
+    fileInput.type    = 'file';
+    fileInput.accept  = 'image/*';
     fileInput.style.display = 'none';
     document.body.appendChild(fileInput);
 
-    // -----------------------------
-    // UI placeholder management
-    // -----------------------------
+    // ─────────────────────────────────────
+    // Placeholder според режима
+    // ─────────────────────────────────────
     function updatePlaceholder() {
-
         const mode = modeSelect.value;
 
         if (mode === 'image') {
-            textInput.placeholder =
-                'Click Verify to upload an image for AI detection';
+            textInput.placeholder = 'Натисни „Провери" за да качиш изображение за AI детекция';
             textInput.disabled = true;
 
         } else if (mode === 'text') {
-            textInput.placeholder =
-                'Paste text to check if it was written by AI...';
+            textInput.placeholder = 'Постави текст за да провериш дали е написан от AI...';
             textInput.disabled = false;
 
         } else {
-            textInput.placeholder =
-                'Enter a claim to fact-check...';
+            textInput.placeholder = 'Въведи твърдение за проверка на факти...';
             textInput.disabled = false;
         }
     }
@@ -42,55 +38,51 @@ document.addEventListener('DOMContentLoaded', () => {
     modeSelect.addEventListener('change', () => {
         updatePlaceholder();
         result.textContent = '';
-        textInput.value = '';
+        textInput.value    = '';
     });
 
-    // -----------------------------
-    // Verify button click
-    // -----------------------------
+    // ─────────────────────────────────────
+    // Бутон „Провери"
+    // ─────────────────────────────────────
     btn.addEventListener('click', async () => {
-
         const mode = modeSelect.value;
         const text = textInput.value.trim();
 
-        // Image mode
         if (mode === 'image') {
             fileInput.click();
             return;
         }
 
         if (!text) {
-            result.textContent = 'Please enter text.';
+            result.textContent = 'Моля, въведи текст.';
             return;
         }
 
         await processRequest(mode, text);
     });
 
-    // -----------------------------
-    // Image selection handler
-    // -----------------------------
+    // ─────────────────────────────────────
+    // Избор на изображение
+    // ─────────────────────────────────────
     fileInput.onchange = async () => {
-
         if (fileInput.files.length > 0) {
             await processRequest('image', fileInput.files[0]);
         }
     };
 
-    // -----------------------------
-    // Main request handler
-    // -----------------------------
+    // ─────────────────────────────────────
+    // Основна функция за заявки
+    // ─────────────────────────────────────
     async function processRequest(mode, inputData) {
 
-        result.textContent = '⏳ Analyzing...';
+        result.textContent = '⏳ Анализирам...';
+        btn.disabled = true;
 
         try {
-
             let response;
 
-            // IMAGE DETECTION
+            // ДЕТЕКЦИЯ НА ИЗОБРАЖЕНИЕ
             if (mode === 'image') {
-
                 const formData = new FormData();
                 formData.append('file', inputData);
 
@@ -98,21 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     body: formData
                 });
-            }
 
-            // TEXT AI DETECTION
-            else if (mode === 'text') {
-
+            // ДЕТЕКЦИЯ НА AI ТЕКСТ
+            } else if (mode === 'text') {
                 response = await fetch(API_BASE + '/detect-text', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: inputData })
                 });
-            }
 
-            // FACT CHECK
-            else {
-
+            // ПРОВЕРКА НА ФАКТИ
+            } else {
                 response = await fetch(API_BASE + '/fact-check', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -120,41 +108,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            if (!response.ok)
-                throw new Error(`Server error ${response.status}`);
+            if (!response.ok) throw new Error(`Грешка от сървъра: ${response.status}`);
 
             const data = await response.json();
 
-            // Classification result formatting
+            // Резултат от класификация (изображение или текст)
             if (mode === 'image' || mode === 'text') {
-
                 const label = data.result[0].label;
-                const score =
-                    (data.result[0].score * 100).toFixed(2);
+                const score = (data.result[0].score * 100).toFixed(2);
+                result.textContent = `Резултат: ${label} (${score}% увереност)`;
 
-                result.textContent =
-                    `Result: ${label} (${score}% confidence)`;
-
-            }
-
-            // LLM fact-check result
-            else {
-
+            // Резултат от проверка на факти
+            } else {
                 result.textContent = data.result;
             }
 
-        }
-
-        catch (error) {
-
+        } catch (error) {
             console.error(error);
+            result.textContent = `❌ Грешка: ${error.message}`;
 
-            result.textContent =
-                `❌ Server error: ${error.message}`;
+        } finally {
+            btn.disabled = false;
         }
     }
 
-    // Initialize UI
+    // Инициализация
     updatePlaceholder();
-
 });
