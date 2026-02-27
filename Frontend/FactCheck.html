@@ -6,41 +6,38 @@
   <title>CheckAI — Проверка на Факти</title>
   <link rel="stylesheet" href="factcheck.css" />
   <style>
-    /* Assistant & results styles added inline for simplicity */
-    #assistant{
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      display:flex;
-      align-items:flex-end;
-      gap:10px;
-      z-index:1000;
-      pointer-events:none;
+    /* Loading bar */
+    .loading-bar{
+      display: none;
+      height: 3px;
+      width: 100%;
+      background: linear-gradient(90deg, #2a7a8a, #1F7A8C);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 10px rgba(42,122,138,0.3);
     }
-    #assistant img{ border-radius:12px; box-shadow:0 8px 18px rgba(0,0,0,0.15); }
-    #bubble{
-      max-width:260px;
-      background:linear-gradient(180deg,#ffffff,#f1f6ff);
-      border-radius:14px;
-      padding:10px 12px;
-      box-shadow:0 6px 18px rgba(20,30,60,0.12);
-      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      font-size:14px;
-      color:#06223a;
-      transition:transform .25s ease,opacity .25s ease;
-      transform-origin:100% 100%;
-      pointer-events:auto;
+    .loading-bar.active{
+      display: block;
+      animation: progress-animation 1.5s ease-in-out infinite;
     }
-    #bubble.typing::after{
-      content:'\00a0';
-      display:inline-block;
-      width:18px;height:1em;
-      background:linear-gradient(90deg,#06223a,#06223a 40%,transparent 40%);
-      animation:blink 1s steps(2) infinite;
-      vertical-align:middle;
-      margin-left:6px;
+    .loading-bar::after{
+      content: '';
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
     }
-    @keyframes blink{50%{opacity:0.2}} 
+    @keyframes progress-animation{
+      0%{ width: 0%; }
+      50%{ width: 100%; }
+      100%{ width: 100%; }
+    }
+    @keyframes shimmer{
+      0%{ transform: translateX(-100%); }
+      100%{ transform: translateX(100%); }
+    }
 
     /* Results card */
     .result-card{
@@ -82,6 +79,8 @@
           <button class="btn verify">Проверка</button>
         </div>
 
+        <div class="loading-bar" id="loading-bar"></div>
+
         <div class="results" id="results">
           <p class="results-empty">Резултатите ще се появят тук след проверката.</p>
         </div>
@@ -89,30 +88,14 @@
     </section>
   </main>
 
-<div id="assistant">
-  <img src="dog.jpg" width="120" onerror="this.style.display='none'">
-  <div id="bubble">Здравейте!</div>
-</div>
+
 
 <script>
 (function(){
   const claimEl = document.getElementById('claim');
   const verifyBtn = document.querySelector('.btn.verify');
   const resultsEl = document.getElementById('results');
-  const bubbleEl = document.getElementById('bubble');
-
-  let speechEnabled = true;
-
-  function assistantSay(text, {typing=false, speakAloud=false} = {}){
-    if(typing){ bubbleEl.classList.add('typing'); }
-    else { bubbleEl.classList.remove('typing'); }
-
-    setTimeout(()=>{
-      bubbleEl.textContent = text;
-      bubbleEl.classList.remove('typing');
-      if(speakAloud && speechEnabled){ speakText(text, 'bg'); }
-    }, typing ? 500 : 0);
-  }
+  const loadingBar = document.getElementById('loading-bar');
 
   function speakText(text, preferredLang){
     if(!('speechSynthesis' in window)) return;
@@ -127,10 +110,14 @@
 
   function setLoading(isLoading){
     verifyBtn.disabled = isLoading;
-    if(isLoading){ assistantSay('Проверявам фактите...', {typing:true, speakAloud:true}); }
+    if(isLoading){
+      loadingBar.classList.add('active');
+    } else {
+      loadingBar.classList.remove('active');
+    }
   }
 
-  function renderResult({verdict, confidence, explanation}){
+  function renderResult({verdict, confidence, explanation, claim}){
     resultsEl.innerHTML = '';
     const card = document.createElement('div');
     card.className = 'result-card';
@@ -158,32 +145,28 @@
     const controls = document.createElement('div');
     controls.className = 'controls-row';
 
-    const speakToggle = document.createElement('button');
-    speakToggle.className = 'btn';
-    speakToggle.textContent = speechEnabled ? '🔊 Глас вкл.' : '🔈 Глас изкл.';
-    speakToggle.onclick = ()=>{ speechEnabled = !speechEnabled; speakToggle.textContent = speechEnabled ? '🔊 Глас вкл.' : '🔈 Глас изкл.'; };
+    // Store claim in a variable to ensure it's captured in closure
+    const claimText = claim || 'неизвестен факт';
 
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'btn';
-    copyBtn.textContent = 'Копирай';
-    copyBtn.onclick = ()=>{ navigator.clipboard?.writeText(`${verdict} (${confidence}%) — ${explanation}`); };
+    const readBtn = document.createElement('button');
+    readBtn.className = 'btn';
+    readBtn.textContent = '🎤 Прочети Резултат';
+    readBtn.onclick = ()=>{
+      const resultText = `Фактът: ${claimText}. Резултат: ${verdict}. Увереност ${confidence} процента. ${explanation}`;
+      speakText(resultText, 'bg');
+    };
 
-    controls.appendChild(speakToggle);
-    controls.appendChild(copyBtn);
+    controls.appendChild(readBtn);
     card.appendChild(controls);
     resultsEl.appendChild(card);
 
     requestAnimationFrame(()=>{ card.classList.add('show'); });
 
-    let comment = verdict.toLowerCase().includes('вяр') ? 'Изглежда вярно.' : 
-                  verdict.toLowerCase().includes('невяр') ? 'Изглежда невярно.' : 'Не съм сигурен.';
-    assistantSay(comment, {typing:true, speakAloud:true});
   }
 
   async function onVerify(){
     const claim = claimEl.value.trim();
     if(!claim){ 
-      assistantSay('Моля, поставете твърдение.', {typing:true, speakAloud:true});
       claimEl.focus();
       return;
     }
@@ -205,11 +188,10 @@
       const raw = data.result || data;
 
       const parsed = parseBackendResult(typeof raw === 'string' ? raw : String(raw));
-      renderResult(parsed || { verdict: 'Резултат', confidence: 100, explanation: String(raw) });
+      renderResult(parsed ? {...parsed, claim} : { verdict: 'Резултат', confidence: 100, explanation: String(raw), claim });
 
     } catch(err) {
       resultsEl.innerHTML = `<div class="result-card show"><div class="verdict false">Грешка</div><div class="explain">Неуспешно свързване. Проверете дали Uvicorn работи на порт 8000.</div></div>`;
-      assistantSay('Възникна грешка.', {typing:true, speakAloud:true});
       console.error(err);
     } finally {
       setLoading(false);
@@ -233,10 +215,6 @@
 
   verifyBtn.addEventListener('click', onVerify);
   claimEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ onVerify(); } });
-
-  window.addEventListener('load', ()=>{
-    assistantSay('Здравейте! Поставете твърдение за проверка.', {typing:true, speakAloud:true});
-  });
 })();
 </script>
 </body>

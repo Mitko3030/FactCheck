@@ -1,5 +1,5 @@
 :root{
-  --bg: #0f1a1a;
+  --bg: #0a1520;
   --teal: #2a7a8a;
   --muted: rgba(234,247,247,0.9);
   --card: rgba(255,255,255,0.02);
@@ -9,18 +9,21 @@
 body{
   margin:0; 
   font-family: Inter, Roboto, system-ui, -apple-system, "Segoe UI", Arial, sans-serif; 
-  background:var(--bg); 
+  background: radial-gradient(circle at center, #0f2a35 0%, var(--bg) 100%);
   color:var(--muted);
 }
 
 .tc-header{
-  position:sticky; 
-  top:0; display:flex; 
-  align-items:center; 
-  justify-content:space-between; 
-  padding:.75rem 1rem; 
-  background:rgba(0,0,0,0.12); 
-  border-bottom:1px solid rgba(255,255,255,0.03)
+  position:fixed;
+  top:0;
+  width:100%;
+  box-sizing:border-box;
+  z-index:99;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:1rem 2rem;
+  background:linear-gradient(180deg, rgba(0,21,26,0.6) 0%, rgba(0,21,26,0) 100%);
 }
 .tc-header .logo
 {
@@ -30,29 +33,23 @@ body{
 
 
 .tc-header .back{
-  display:inline-flex;
-  align-items:center;
-  gap:0.5rem;
+  color:var(--muted);
   text-decoration:none;
-  background: rgba(255,255,255,0.03);
-  color: #ffffff;
-  padding: 0.45rem 0.8rem;
-  border-radius: 999px;
-  font-weight: 600;
+  padding:0.45rem 0.6rem;
+  border-radius:8px;
+  font-weight:600;
 }
 .tc-header .back:hover{ 
-  background: rgba(255,255,255,0.05); 
-}
-.tc-header .back .arrow{ 
-  font-weight:700 
+  background: rgba(255,255,255,0.02); 
 }
 
 .tc-main{
-  display:grid; 
-  grid-template-columns:1fr 360px; 
-  gap:1.25rem; 
-  align-items:start; 
+  display:grid;
+  grid-template-columns:1fr 360px;
+  gap:1.25rem;
+  align-items:start;
   padding:1.25rem;
+  margin-top:80px;
 }
 
 .col-left textarea

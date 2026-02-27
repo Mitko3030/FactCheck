@@ -1,10 +1,10 @@
 :root {
-  --bg: #0f1a1a;
+  --bg: #0a1520;
   --teal: #2a7a8a;
   --teal-glow: rgba(42, 122, 138, 0.4);
   --muted: rgba(234,247,247,0.85);
   --card: rgba(255,255,255,0.03);
-  --charcoal: #0c1112;
+  --charcoal: #060d14;
 }
 
 /* RESET */
@@ -21,10 +21,7 @@ section {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(42,122,138,0.08), transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(42,122,138,0.06), transparent 40%),
-    var(--bg);
+  background: radial-gradient(circle at center, #0f2a35 0%, var(--bg) 100%);
   overflow: hidden;
   position: relative;
 }

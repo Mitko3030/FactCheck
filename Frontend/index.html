@@ -3,34 +3,75 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>CheckAI — Проверка на Факти</title>
+    <title>CheckAI</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="normalize.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="auth.js"></script>
 </head>
 <body>
 
-    <nav class="auth-nav" id="auth-links">
-        <a href="login.html" class="auth-link">Влез</a>
-        <a href="register.html" class="auth-btn">Регистрация</a>
-    </nav>
-</header>
-    <header class="hero" id="home">
-    <div class="hero-inner">
-        <div class="logo-container">
+    <header class="main-header">
+        <div class="header-logo">
             <img src="/logo.svg" alt="CheckAI Shield Logo" class="main-logo">
         </div>
+        <nav class="auth-nav" id="auth-links">
+            <a href="login.html" class="auth-link">Влез</a>
+            <a href="register.html" class="auth-btn">Регистрация</a>
+        </nav>
+        <div class="profile-section" id="profile-section" style="display:none;">
+            <button class="profile-icon-btn" id="profile-icon-btn">
+                <i class="fas fa-user-circle"></i>
+            </button>
+            <div class="profile-dropdown" id="profile-dropdown">
+                <div class="dropdown-user">
+                    <span id="dropdown-username"></span>
+                </div>
+                <button class="signout-btn" id="signout-btn">Изход</button>
+            </div>
+        </div>
+    </header>
+
+    <header class="hero" id="home">
+    <div class="hero-inner">
         
         <h1 class="site-title">CheckAI</h1>
         <p class="subtitle">Минималистичен инструмент за проверка на истинност — проверяй твърдения, проверявай изображения или анализирай текст за секунди.</p>
 
         <nav class="mode-nav" aria-label="Режими на проверка">
-            <a class="nav-btn" href="FactCheck.html">Проверка на Факти</a>
-            <a class="nav-btn" href="ImageCheck.html">Проверка на Изображение</a>
-            <a class="nav-btn" href="TextCheck.html">Проверка на Текст</a>
+            <a class="nav-btn" href="FactCheck.html">Факт</a>
+            <a class="nav-btn" href="ImageCheck.html">Изображение</a>
+            <a class="nav-btn" href="TextCheck.html">Текст</a>
         </nav>
     </div>
 </header>
 
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-section">
+                <h3>CheckAI</h3>
+                <p>Минималистичен инструмент за проверка на истинност.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Навигация</h4>
+                <ul>
+                    <li><a href="FactCheck.html">Факт Проверка</a></li>
+                    <li><a href="ImageCheck.html">Изображение Проверка</a></li>
+                    <li><a href="TextCheck.html">Текст Анализ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Профил</h4>
+                <ul>
+                    <li><a href="login.html">Влез</a></li>
+                    <li><a href="register.html">Регистрација</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 CheckAI. Всички права запазени.</p>
+        </div>
+    </footer>
         
 </body>
 </html>

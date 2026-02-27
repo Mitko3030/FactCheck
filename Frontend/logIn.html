@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheckAI — Вход</title>
     <link rel="stylesheet" href="login.css">
+    <script src="auth.js"></script>
 </head>
 <body>
     <section>
@@ -59,6 +60,14 @@ window.loginUser = function () {
 
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
+      const user = userCredential.user;
+      // Store user data in localStorage
+      const userData = {
+        email: user.email,
+        uid: user.uid,
+        name: user.displayName || user.email.split('@')[0]
+      };
+      window.setUserLogin(userData);
       alert("Вход успешен!");
       window.location.href = "index.html";
     })

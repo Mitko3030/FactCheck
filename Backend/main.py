@@ -1,3 +1,5 @@
+
+
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 from transformers import pipeline
@@ -44,15 +46,15 @@ print("Зареждане на моделите...")
 # ───── Image detector ─────
 image_detector = pipeline(
     "image-classification",
-    model="umm-maybe/AI-image-detector"
+    model="capcheck/ai-human-generated-image-detection"
 )
 
 # ───── Text detector ─────
 text_detector = pipeline(
     "text-classification",
-    model="fakespot-ai/roberta-base-ai-text-detection-v1"
+    model="xlm-roberta-large"
 )
-
+#fakespot-ai/roberta-base-ai-text-detection-v1
 # ───── BgGPT LLM ─────
 print("Изтегляне на модела...")
 model_path = hf_hub_download(
@@ -190,4 +192,4 @@ async def fact_check(data: FactInput):
 
     response = {"result": result_text}
     fact_cache[cache_key] = response
-    return response
+    return response        
