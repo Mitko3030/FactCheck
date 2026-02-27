@@ -44,7 +44,7 @@ print("Зареждане на моделите...")
 # ───── Image detector ─────
 image_detector = pipeline(
     "image-classification",
-    model="capcheck/ai-human-generated-image-detection"
+    model="umm-maybe/AI-image-detector"
 )
 
 # ───── Text detector ─────

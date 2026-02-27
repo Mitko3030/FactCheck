@@ -29,23 +29,7 @@ section {
   position: relative;
 }
 
-/* SCANNING LINE */
-/*section::before {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background: var(--teal);
-  opacity: 0.08;
-  animation: scanLine 6s linear infinite;
-}*/
 
-/*@keyframes scanLine {
-  from { top: 0; }
-  to { top: 100%; }
-}*/
-
-/* LOGIN CARD */
 .login-box {
   width: 380px;
   padding: 45px 40px;
@@ -182,4 +166,21 @@ button:active {
     width: 90%;
     padding: 35px 25px;
   }
+}
+
+
+.fgp{
+
+  color:white;
+  padding-left: 29px;
+}
+.remme
+{
+  color:#fff;
+  padding-left: 5px;
+}
+.remme input
+{
+
+padding-left: 8px;
 }

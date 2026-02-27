@@ -3,26 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CheckAI — ImageCheck</title>
+  <title>CheckAI — Проверка на изображение</title>
   <link rel="stylesheet" href="imagecheck.css" />
 </head>
 <body>
 
   <header class="ic-header">
-    <a class="back" href="index.html" aria-label="Back"><span class="arrow">←</span> Back</a>
+    <a class="back" href="index.html" aria-label="Назад"><span class="arrow">←</span> Назад</a>
     <div class="logo">CheckAI</div>
   </header>
 
   <main class="ic-main">
     <section class="upload-card">
-      <h1 class="card-title">ImageCheck</h1>
+      <h1 class="card-title">Проверка на изображение</h1>
 
       <div class="dropzone" id="dropzone" tabindex="0">
         
         <div id="preview-area" style="display: none; width: 100%; z-index: 5;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <span id="file-name-display" style="font-size: 0.9rem; opacity: 0.7;"></span>
-            <button id="reset-btn" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:700;">Remove</button>
+            <button id="reset-btn" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:700;">Премахни</button>
           </div>
           <img id="img-preview" src="" alt="Preview" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 8px;">
         </div>
@@ -33,26 +33,24 @@
             <path d="M8 7l4-4 4 4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
           </svg>
-          <p class="dz-text">Drag & Drop an image here</p>
-          <p class="dz-sub">or</p>
-          <button class="btn browse">Browse Files</button>
+          <p class="dz-text">Плъзни и пусни изображение тук</p>
+          <p class="dz-sub">или</p>
+          <button class="btn browse">Избери файл</button>
           
           <input type="file" id="file-input" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;">
         </div>
 
         <div class="scanning-overlay" aria-hidden="true">
-            <div class="label">Scanning AI Patterns...</div>
+            <div class="label">Сканиране за AI модели...</div>
         </div>
       </div>
-
-      <div class="meta-grid">
-        <div class="meta-item"><strong>Image Resolution</strong><span id="meta-res">—</span></div>
-        <div class="meta-item"><strong>File Type</strong><span id="meta-type">—</span></div>
-        <div class="meta-item"><strong>Metadata Status</strong><span id="meta-meta">—</span></div>
+      <div class="meta-grid" style="grid-template-columns: repeat(2, 1fr);">
+        <div class="meta-item"><strong>Тип файл</strong><span id="meta-type">—</span></div>
+        <div class="meta-item"><strong>Статус на метаданните</strong><span id="meta-meta">—</span></div>
       </div>
 
       <div class="analyze-wrap">
-        <button class="btn analyze" id="analyze-btn">Analyze Image</button>
+        <button class="btn analyze" id="analyze-btn">Анализирай изображението</button>
       </div>
     </section>
   </main>
@@ -68,36 +66,32 @@ const resetBtn = document.getElementById('reset-btn');
 const analyzeBtn = document.getElementById('analyze-btn');
 
 // Meta labels
-const metaRes = document.getElementById('meta-res');
 const metaType = document.getElementById('meta-type');
 const metaStatus = document.getElementById('meta-meta');
 
 fileInput.addEventListener('change', function() {
     const file = this.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            imgPreview.src = e.target.result;
-            fileNameDisplay.textContent = file.name;
-            uploadPrompt.style.display = 'none';
-            previewArea.style.display = 'block';
-            metaType.textContent = file.type.split('/')[1].toUpperCase();
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => { metaRes.textContent = `${this.width} × ${this.height}`; };
-        };
-        reader.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imgPreview.src = e.target.result;
+        fileNameDisplay.textContent = file.name;
+        uploadPrompt.style.display = 'none';
+        previewArea.style.display = 'block';
+        metaType.textContent = file.type.split('/')[1].toUpperCase();
+      };
+      reader.readAsDataURL(file);
     }
 });
 
 // THE BACKEND CONNECTION
 analyzeBtn.addEventListener('click', async () => {
     const file = fileInput.files[0];
-    if (!file) return alert("Please upload an image first!");
+    if (!file) return alert("Моля, качете изображение първо!");
 
     // Start UI Animation
     dropzone.setAttribute('data-scanning', 'true');
-    analyzeBtn.textContent = "Analyzing AI Patterns...";
+    analyzeBtn.textContent = "Сканиране за AI...";
     analyzeBtn.disabled = true;
 
     const formData = new FormData();
@@ -118,27 +112,27 @@ analyzeBtn.addEventListener('click', async () => {
         const confidence = Math.round(topResult.score * 100);
 
         // Update UI with Result
-        metaStatus.textContent = isAI ? `AI (${confidence}%)` : `Human (${confidence}%)`;
+        metaStatus.textContent = isAI ? `AI (${confidence}%)` : `Човек (${confidence}%)`;
         metaStatus.style.color = isAI ? "#ff4d4d" : "#2ea043";
         
-        analyzeBtn.textContent = isAI ? "⚠️ AI GENERATED DETECTED" : "✅ HUMAN ORIGIN DETECTED";
+        analyzeBtn.textContent = isAI ? "⚠️ Открито AI генерирано" : "✅ Открито човешко";
 
     } catch (error) {
         console.error("Error:", error);
-        alert("Could not connect to the AI server.");
+        alert("Не може да се свърже със сървъра за AI.");
     } finally {
         dropzone.setAttribute('data-scanning', 'false');
         analyzeBtn.disabled = false;
     }
 });
 
-resetBtn.addEventListener('click', () => {
+  resetBtn.addEventListener('click', () => {
     fileInput.value = "";
     uploadPrompt.style.display = 'flex';
     previewArea.style.display = 'none';
     metaStatus.textContent = "—";
     metaStatus.style.color = "";
-    analyzeBtn.textContent = "Analyze Image";
+    analyzeBtn.textContent = "Анализирай изображението";
 });
   </script>
 </body>
