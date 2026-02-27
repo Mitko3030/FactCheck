@@ -1,49 +1,49 @@
 <!doctype html>
-<html lang="en">
+<html lang="bg">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CheckAI — TextCheck</title>
+  <title>CheckAI — Проверка на Текст</title>
   <link rel="stylesheet" href="textcheck.css" />
 </head>
 <body>
   <header class="tc-header">
-    <a class="back" href="index.html" aria-label="Back"><span class="arrow">←</span> Back</a>
+    <a class="back" href="index.html" aria-label="Назад"><span class="arrow">←</span> Назад</a>
     <div class="logo">CheckAI</div>
   </header>
 
   <main class="tc-main">
     <section class="col-left">
-      <label for="longtext" class="sr-only">Paste or type text (max 5000 chars)</label>
-      <textarea id="longtext" maxlength="5000" placeholder="Paste or type text (up to 5000 characters)..."></textarea>
+      <label for="longtext" class="sr-only">Дъвка или напиши текст (максимум 5000 символа)</label>
+      <textarea id="longtext" maxlength="5000" placeholder="Дъвка или напиши текст (до 5000 символа)..."></textarea>
 
       <div class="controls">
         <span id="charcount">0 / 5000</span>
-        <button id="analyzeBtn" class="btn analyze">Analyze</button>
+        <button id="analyzeBtn" class="btn analyze">Анализирай</button>
       </div>
     </section>
 
     <aside class="col-right" id="dashboard">
-      <div class="dashboard-empty">Results dashboard — click Analyze to populate.</div>
+      <div class="dashboard-empty">Дъшборд с резултати — натисни Анализирай за попълване.</div>
 
       <div class="dashboard-contents" hidden>
         <div class="metric">
-          <div class="metric-header"><span>AI Probability</span><span id="aiPct">0%</span></div>
+          <div class="metric-header"><span>Вероятност AI</span><span id="aiPct">0%</span></div>
           <div class="progress"><div class="progress-fill" id="aiFill" style="width:0%"></div></div>
         </div>
 
         <div class="metric">
-          <div class="metric-header"><span>Objectivity Score</span><span id="objPct">0%</span></div>
+          <div class="metric-header"><span>Оценка на Обективност</span><span id="objPct">0%</span></div>
           <div class="progress"><div class="progress-fill" id="objFill" style="width:0%"></div></div>
         </div>
 
         <div class="metric">
-          <div class="metric-header"><span>Reading Level</span><span id="readPct">0%</span></div>
+          <div class="metric-header"><span>Ниво на Четене</span><span id="readPct">0%</span></div>
           <div class="progress"><div class="progress-fill" id="readFill" style="width:0%"></div></div>
         </div>
 
         <div class="details">
-          <h4>Summary</h4>
+          <h4>Резюме</h4>
           <p id="summary">—</p>
         </div>
       </div>
@@ -63,7 +63,7 @@
     // Demo analyze: compute simple heuristics and animate fills
     analyzeBtn.addEventListener('click', ()=>{
       const text = ta.value.trim();
-      if(!text){ alert('Please enter some text to analyze.'); ta.focus(); return; }
+      if(!text){ alert('Моля, въведи текст за анализ.'); ta.focus(); return; }
 
       // Simple heuristics for demo purposes
       const words = text.split(/\s+/).filter(Boolean).length;
@@ -80,7 +80,7 @@
       animateFill('objFill','objPct', objScore);
       animateFill('readFill','readPct', reading);
 
-      document.getElementById('summary').textContent = `Words: ${words} · Avg word length: ${avgWordLen.toFixed(1)}`;
+      document.getElementById('summary').textContent = `Думи: ${words} · Преалчна дължина на дума: ${avgWordLen.toFixed(1)}`;
     });
 
     function animateFill(fillId, pctId, target){

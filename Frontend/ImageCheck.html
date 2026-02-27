@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="bg">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -65,7 +65,7 @@ const fileNameDisplay = document.getElementById('file-name-display');
 const resetBtn = document.getElementById('reset-btn');
 const analyzeBtn = document.getElementById('analyze-btn');
 
-// Meta labels
+    // Мета етикети
 const metaType = document.getElementById('meta-type');
 const metaStatus = document.getElementById('meta-meta');
 
@@ -84,12 +84,12 @@ fileInput.addEventListener('change', function() {
     }
 });
 
-// THE BACKEND CONNECTION
+// СВЪРЗВАНЕ С BACKEND-А
 analyzeBtn.addEventListener('click', async () => {
     const file = fileInput.files[0];
     if (!file) return alert("Моля, качете изображение първо!");
 
-    // Start UI Animation
+        // Начало на UI анимацията
     dropzone.setAttribute('data-scanning', 'true');
     analyzeBtn.textContent = "Сканиране за AI...";
     analyzeBtn.disabled = true;
@@ -105,13 +105,13 @@ analyzeBtn.addEventListener('click', async () => {
 
         const data = await response.json();
         
-        // Your model returns a list like: [{label: 'AI', score: 0.99}, ...]
-        // We find the one with the highest score
+        // Резултатът от модела изглежда така: [{label: 'AI', score: 0.99}, ...]
+        // Намираме този с най-висок резултат
         const topResult = data.result[0]; 
         const isAI = topResult.label.toLowerCase().includes('ai');
         const confidence = Math.round(topResult.score * 100);
 
-        // Update UI with Result
+        // Актуализирай интерфейса с резултата
         metaStatus.textContent = isAI ? `AI (${confidence}%)` : `Човек (${confidence}%)`;
         metaStatus.style.color = isAI ? "#ff4d4d" : "#2ea043";
         

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="bg">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CheckAI — FactCheck</title>
+  <title>CheckAI — Проверка на Факти</title>
   <link rel="stylesheet" href="factcheck.css" />
   <style>
     /* Assistant & results styles added inline for simplicity */
@@ -66,24 +66,24 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="back" href="index.html" aria-label="Back to home">← Back</a>
+    <a class="back" href="index.html" aria-label="Назад на начало">← Назад</a>
     <div class="logo">CheckAI</div>
   </header>
 
   <main class="page-wrap">
     <section class="center-col">
       <div class="card">
-        <h1 class="page-title">FactCheck</h1>
+        <h1 class="page-title">Проверка на Факти</h1>
 
-        <label for="claim" class="sr-only">Paste claim here</label>
-        <textarea id="claim" class="claim-input" placeholder="Paste claim here..."></textarea>
+        <label for="claim" class="sr-only">Постави твърдение тук</label>
+        <textarea id="claim" class="claim-input" placeholder="Постави твърдение тук..."></textarea>
 
         <div class="actions">
-          <button class="btn verify">Verify</button>
+          <button class="btn verify">Проверка</button>
         </div>
 
         <div class="results" id="results">
-          <p class="results-empty">Results will appear here after verification.</p>
+          <p class="results-empty">Резултатите ще се появят тук след проверката.</p>
         </div>
       </div>
     </section>
@@ -136,7 +136,7 @@
     card.className = 'result-card';
 
     const v = document.createElement('div');
-    // Map Bulgarian/Mixed results to English classes (true/false/uncertain)
+    // Картографирай български/смесени резултати към класове true/false/неясно
     const normClass = verdict.toLowerCase().includes('вяр') || verdict.toLowerCase().includes('true') ? 'true' : 
                       verdict.toLowerCase().includes('невяр') || verdict.toLowerCase().includes('false') ? 'false' : 'uncertain';
     
@@ -199,7 +199,7 @@
         body: JSON.stringify({ claim: claim })
       });
 
-      if(!resp.ok) throw new Error(`Server error ${resp.status}`);
+      if(!resp.ok) throw new Error(`Грешка на сървъра ${resp.status}`);
 
       const data = await resp.json();
       const raw = data.result || data;

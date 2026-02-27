@@ -36,7 +36,7 @@ html,body{ margin: 0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', 
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    z-index: 100; /* Ensures it stays above the hero background */
+    z-index: 100; /* Гарантирайте че остане над фоновото изображение на героя */
 }
 
 .auth-link {

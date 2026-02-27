@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bg">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log In</title>
+    <title>CheckAI — Вход</title>
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
     <section>
     <div class ="login-box">
         <form action="">
-            <h2>Log in</h2>
+            <h2>Вход</h2>
             <div class="input-box">
                <span class="icon"><ion-icon name="mail"></ion-icon></span>
                 <input type="email" id="email" required>
-                <label>Email</label>
+                <label>Имейл</label>
             </div>
             <div class="input-box">
                <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
                 <input type="password" id="password" required>
-                <label>Password</label>
+                <label>Пароли</label>
             </div>
           <div class="remember-forgot">
-            <label class="remme"><input type="checkbox">Remember me</label>
-            <a class="fgp" href="#">Forgot Password?</a>
+            <label class="remme"><input type="checkbox">Запомни ме</label>
+            <a class="fgp" href="#">Забравихте парола?</a>
         </div> 
-       <button type="button" onclick="loginUser()">Log in</button>
+       <button type="button" onclick="loginUser()">Вход</button>
         <div class="register-link">
-            <p>Don't have an account? <a href="register.html">Register</a></p>
+            <p>Нямате профил? <a href="register.html">Регистрирайте се</a></p>
         </div>
 
         </form>
@@ -59,7 +59,7 @@ window.loginUser = function () {
 
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      alert("Login successful!");
+      alert("Вход успешен!");
       window.location.href = "index.html";
     })
     .catch((error) => {
