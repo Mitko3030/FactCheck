@@ -251,7 +251,7 @@ image_detector = pipeline(
 # ───── Text detector ─────
 text_detector = pipeline(
     "text-classification",
-    model="xlm-roberta-base"
+    model="xlm-roberta-large"
 )
 
 print("Всички модели са заредени!")
