@@ -96,7 +96,7 @@ body{
 .btn.browse{
   background:var(--teal); 
   border:none; 
-  color:#071014; 
+  color:#e2e8f0; 
   padding:.5rem .9rem; 
   border-radius:8px; 
   font-weight:700
@@ -133,7 +133,7 @@ body{
 }
 .btn.analyze{
   background:var(--teal); 
-  color:#071014; 
+  color:#e2e8f0; 
   border:none; 
   padding:.9rem 1rem; 
   border-radius:10px; 

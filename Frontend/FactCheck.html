@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CheckAI — Проверка на Факти</title>
+  <title>FactCheck — Проверка на Факти</title>
   <link rel="stylesheet" href="factcheck.css" />
   <style>
     /* Loading bar */
@@ -64,7 +64,7 @@
 <body>
   <header class="site-header">
     <a class="back" href="index.html" aria-label="Назад на начало">← Назад</a>
-    <div class="logo">CheckAI</div>
+    <div class="logo">FactCheck</div>
   </header>
 
   <main class="page-wrap">
@@ -199,6 +199,25 @@
   }
 
   function parseBackendResult(text){
+    // Handle format: "Вярно — explanation" or "Невярно — explanation"
+    const dashMatch = text.match(/^(Вярно|Невярно|Вярна|Невярна)\s*—\s*(.+)$/i);
+    
+    if(dashMatch){
+      const verdict = dashMatch[1].trim();
+      const explanation = dashMatch[2].trim();
+      
+      // Assign confidence based on verdict confidence
+      // You could make this dynamic based on explanation length/certainty
+      const confidence = explanation.length > 50 ? 85 : 70;
+      
+      return {
+        verdict: verdict,
+        confidence: confidence,
+        explanation: explanation
+      };
+    }
+
+    // Fallback to old parsing method if ^ doesn't match
     const verdictMatch = text.match(/(?:Verdict|Вердикт)\s*:\s*(.+)/i);
     const confidenceMatch = text.match(/(?:Увереност|Confidence)\s*:\s*(\d{1,3})%/i);
     const explanationMatch = text.match(/(?:Обяснение|Explanation)\s*:\s*([\s\S]+)/i);
@@ -206,7 +225,7 @@
     if(verdictMatch || confidenceMatch || explanationMatch){
       return {
         verdict: verdictMatch ? verdictMatch[1].trim() : 'Анализ',
-        confidence: confidenceMatch ? parseInt(confidenceMatch[1],10) : 0,
+        confidence: confidenceMatch ? parseInt(confidenceMatch[1],10) : 75,
         explanation: explanationMatch ? explanationMatch[1].trim() : text
       };
     }
