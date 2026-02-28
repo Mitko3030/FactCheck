@@ -247,7 +247,7 @@ image_detector = pipeline(
     "image-classification",
     model="capcheck/ai-human-generated-image-detection"
 )
-
+ 
 # ───── Text detector ─────
 text_detector = pipeline(
     "text-classification",

@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.accept  = 'image/*';
     fileInput.style.display = 'none';
     document.body.appendChild(fileInput);
-
+ 
     // ─────────────────────────────────────
     // Placeholder според режима
     // ─────────────────────────────────────

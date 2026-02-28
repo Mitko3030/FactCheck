@@ -17,4 +17,4 @@ uvicorn
 transformers
 Pillow
 requests
-torch
+torch 

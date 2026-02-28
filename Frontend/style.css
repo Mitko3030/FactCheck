@@ -20,7 +20,7 @@ html,body{ margin: 0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', 
 
 .hero-inner{ text-align:center; display:flex; flex-direction:column; align-items:center }
 .hero{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:2rem; background: radial-gradient(circle at center, #0f2a35 0%, #061416 100%); }
-
+ 
 .site-title{ margin:0 0 .5rem 0; font-size: clamp(2.4rem, 6vw, 4rem); font-weight:800; letter-spacing:-0.02em; color:#eaf7f7 }
 .subtitle{ margin:0 0 1.5rem 0; color: rgba(234,247,247,0.9); font-size: clamp(1rem,2.2vw,1.15rem); max-width:760px }
 

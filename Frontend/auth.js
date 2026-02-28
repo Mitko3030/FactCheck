@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const signoutBtn = document.getElementById('signout-btn');
 
     // Check if user is logged in
-    function checkLoginState() {
+    function checkLoginState() { 
         const userData = localStorage.getItem('user');
         return userData ? JSON.parse(userData) : null;
     }

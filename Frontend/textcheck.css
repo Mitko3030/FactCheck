@@ -78,7 +78,7 @@ body{
   color:#fff; 
   border:none; 
   padding:.6rem 1rem; 
-  border-radius:10px; 
+  border-radius:10px;  
   font-weight:700
 }
 .btn.analyze:hover{
