@@ -454,8 +454,8 @@ fact_cache = {}
 
 # ───── API Keys ─────
 # Използваме ключа директно за Serper, ако липсва в обкръжението
-SERPER_API_KEY = os.getenv("SERPER_API_KEY", "3c6cba844457eff753d0c9cfd8cce7ffbf4b090e")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "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")
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 # Проверка само за критичния Claude ключ
 if not ANTHROPIC_API_KEY:
