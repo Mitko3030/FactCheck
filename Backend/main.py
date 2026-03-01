@@ -214,7 +214,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://fact-check.up.railway.app"], # Твоят фронтенд
+    allow_origins=[
+        "https://fact-check.up.railway.app",
+        "https://factcheck-noit.up.railway.app"
+    ], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
