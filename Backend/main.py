@@ -406,7 +406,6 @@
 
 
 from fastapi import FastAPI, UploadFile, File
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from transformers import pipeline
 from PIL import Image
@@ -417,22 +416,13 @@ import os
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from fastapi.middleware.cors import CORSMiddleware
-import anthropic
+import google.generativeai as genai
 
 app = FastAPI()
 
-# 1. Поправен CORS за Railway
-# Добавяме и локалния хост, и твоя домейн в Railway
-ALLOWED_ORIGINS = [
-    "https://fact-check.up.railway.app",
-    "https://factcheck-noit.up.railway.app",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000"
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -453,93 +443,129 @@ executor = ThreadPoolExecutor(max_workers=CPU_CORES)
 fact_cache = {}
 
 # ───── API Keys ─────
-# Използваме ключа директно за Serper, ако липсва в обкръжението
-SERPER_API_KEY = os.getenv("SERPER_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+SERPER_API_KEY = "3c6cba844457eff753d0c9cfd8cce7ffbf4b090e"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Проверка само за критичния Claude ключ
-if not ANTHROPIC_API_KEY:
-    print("⚠️ ВНИМАНИЕ: ANTHROPIC_API_KEY не е намерен. Сървърът ще работи, но Fact-Check ще дава грешка.")
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Инициализиране на Claude клиента само ако има ключ
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+print("Зареждане на моделите...")
 
-# ───── Lazy model loading ─────
-image_detector = None
-text_detector = None
+# ───── Image detector ─────
+image_detector = pipeline(
+    "image-classification",
+    model="umm-maybe/AI-image-detector"
+)
 
-def load_image_detector():
-    global image_detector
-    if image_detector is None:
-        image_detector = pipeline("image-classification", model="capcheck/ai-human-generated-image-detection")
-    return image_detector
+# ───── Text detector ─────
+text_detector = pipeline(
+    "text-classification",
+    model="roberta-base-openai-detector"
+)
 
-def load_text_detector():
-    global text_detector
-    if text_detector is None:
-        text_detector = pipeline("text-classification", model="roberta-base-openai-detector")
-    return text_detector
+print("Всички модели са заредени!")
+
 
 # ───── Serper search ─────
 def search_web(query: str) -> str:
     for lang in (("bg", "bg"), ("us", "en")):
         gl, hl = lang
-        try:
-            response = requests.post(
-                "https://google.serper.dev/search",
-                headers={"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"},
-                json={"q": query, "gl": gl, "hl": hl, "num": 5},
-                timeout=6
-            )
-            if response.ok:
+        for attempt in range(2):
+            try:
+                response = requests.post(
+                    "https://google.serper.dev/search",
+                    headers={
+                        "X-API-KEY": SERPER_API_KEY,
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "q": query,
+                        "gl": gl,
+                        "hl": hl,
+                        "num": 5,
+                        "lr": "lang_bg" if gl == "bg" else "lang_en"
+                    },
+                    timeout=6
+                )
+                if not response.ok:
+                    break
                 data = response.json()
-                snippets = [r.get("snippet", "") for r in data.get("organic", []) if r.get("snippet")]
-                if snippets: return " | ".join(snippets)
-        except (requests.Timeout, Exception):
-            continue
+                snippets = []
+                if data.get("answerBox"):
+                    box = data["answerBox"]
+                    if box.get("answer"):
+                        snippets.append(box["answer"])
+                    if box.get("snippet"):
+                        snippets.append(box["snippet"])
+                for r in data.get("organic", [])[:4]:
+                    if r.get("snippet"):
+                        snippets.append(r["snippet"])
+                if snippets:
+                    return " | ".join(snippets)
+            except requests.Timeout:
+                pass
+            except Exception:
+                break
     return "Няма намерена информация."
 
-# ───── Claude inference ─────
+
+# ───── Gemini inference ─────
 def run_llm(claim: str) -> str:
-    if not client:
-        return "Грешка: Липсва API ключ за Claude AI."
-        
     search_result = search_web(claim)
+    print(f"📄 Намерено: {search_result[:200]}...")
     context = search_result[:700]
 
     prompt = f"""Отговаряй САМО на български език.
-Провери твърдението: {claim}
-Използвай информацията: {context}
-Започни с 'Вярно' или 'Невярно' - едно изречение обяснение."""
+
+Провери следното твърдение като използваш само информацията по-долу.
+
+Информация: {context}
+
+Твърдение: {claim}
+
+Отговорът ти трябва да започва ЗАДЪЛЖИТЕЛНО с "Вярно" или "Невярно", последвано от тире и едно изречение. Забранено е да пишеш "Неясно", "Анализ" или каквото и да е друго в началото.
+Пример за правилен отговор: Вярно — България е държава в Европа.
+
+Отговор: """
 
     try:
-        # 2. Поправено име на модела на валидно такова (Claude 3.5 Haiku)
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=120,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return message.content[0].text.strip()
+        response = model.generate_content(prompt)
+        return response.text.strip()
     except Exception as e:
         return f"Грешка при AI анализ: {str(e)}"
 
+
 # ───── Endpoints ─────
+
 @app.get("/")
 def home():
     return {"status": "AI backend работи"}
 
+
+@app.post("/detect-image")
+async def detect_image(file: UploadFile = File(...)):
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(executor, image_detector, image)
+    return {"result": result}
+
+
+@app.post("/detect-text")
+async def detect_text(data: TextInput):
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(executor, text_detector, data.text)
+    return {"result": result}
+
+
 @app.post("/fact-check")
 async def fact_check(data: FactInput):
     cache_key = hashlib.md5(data.claim.lower().strip().encode()).hexdigest()
-    if cache_key in fact_cache: return fact_cache[cache_key]
-
+    if cache_key in fact_cache:
+        print("✅ Cache hit")
+        return fact_cache[cache_key]
     loop = asyncio.get_event_loop()
     result_text = await loop.run_in_executor(executor, run_llm, data.claim)
     response = {"result": result_text}
     fact_cache[cache_key] = response
     return response
-
-# ───── Статични файлове ─────
-frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
