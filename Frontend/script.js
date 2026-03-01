@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const textInput  = document.getElementById('inputText');
     const btn        = document.getElementById('checkBtn');
     const result     = document.getElementById('result');
-
+ 
     // Скрит input за изображения
     const fileInput = document.createElement('input');
     fileInput.type    = 'file';
