@@ -8,3 +8,4 @@ requests==2.31.0
 python-multipart==0.0.6
 numpy==1.26.4
 anthropic
+aiofiles

@@ -1,5 +1,5 @@
-// API base — смени само ако backend-ът работи другаде
-const API_BASE = 'https://fact-check.up.railway.app';
+// API base — relative path so it works anywhere
+const API_BASE = '';
 //
 document.addEventListener('DOMContentLoaded', () => {
 

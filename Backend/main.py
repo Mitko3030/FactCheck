@@ -198,6 +198,7 @@
 
 
 from fastapi import FastAPI, UploadFile, File
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from transformers import pipeline
 from PIL import Image
@@ -394,3 +395,9 @@ async def fact_check(data: FactInput):
     response = {"result": result_text}
     fact_cache[cache_key] = response
     return response
+
+
+# ───── Serve static frontend files ─────
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
