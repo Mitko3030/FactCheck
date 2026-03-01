@@ -1,5 +1,5 @@
 // API base — смени само ако backend-ът работи другаде
-const API_BASE = 'https://factcheck-noit.up.railway.app';
+const API_BASE = 'https://fact-check.up.railway.app';
 
 document.addEventListener('DOMContentLoaded', () => {
 
