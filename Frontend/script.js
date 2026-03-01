@@ -1,5 +1,5 @@
 // API base — смени само ако backend-ът работи другаде
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'https://factcheck-noit.up.railway.app';
 
 document.addEventListener('DOMContentLoaded', () => {
 
