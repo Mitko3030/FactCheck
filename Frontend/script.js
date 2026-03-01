@@ -1,6 +1,6 @@
 // API base — смени само ако backend-ът работи другаде
 const API_BASE = 'https://fact-check.up.railway.app';
-
+//
 document.addEventListener('DOMContentLoaded', () => {
 
     const modeSelect = document.getElementById('modeSelect');
