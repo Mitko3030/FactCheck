@@ -1,5 +1,5 @@
 // API base — relative path so it works anywhere
-const API_BASE = '';
+const API_BASE = 'https://factcheck-noit.up.railway.app';
 //
 document.addEventListener('DOMContentLoaded', () => {
 
