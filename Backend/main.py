@@ -506,7 +506,7 @@ def search_web(query: str) -> str:
             except Exception:
                 break
     return "Няма намерена информация."
-
+ 
 
 # ───── Gemini inference ─────
 def run_llm(claim: str) -> str:
