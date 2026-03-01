@@ -405,6 +405,209 @@
 
 
 
+# from fastapi import FastAPI, UploadFile, File
+# from fastapi.staticfiles import StaticFiles
+# from pydantic import BaseModel
+# from transformers import pipeline
+# from PIL import Image
+# import io
+# import hashlib
+# import asyncio
+# import os
+# import requests
+# from concurrent.futures import ThreadPoolExecutor
+# from fastapi.middleware.cors import CORSMiddleware
+# from google import genai
+
+# app = FastAPI()
+
+# # Railway-safe CORS configuration
+# ALLOWED_ORIGINS = os.getenv(
+#     "ALLOWED_ORIGINS",
+#     "http://localhost:8000"
+# ).split(",")
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=ALLOWED_ORIGINS,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+# # ───── Schemas ─────
+# class TextInput(BaseModel):
+#     text: str
+
+# class FactInput(BaseModel):
+#     claim: str
+
+# # ───── Thread pool ─────
+# CPU_CORES = os.cpu_count() or 4
+# executor = ThreadPoolExecutor(max_workers=CPU_CORES)
+
+# # ───── In-memory cache ─────
+# fact_cache = {}
+
+# # ───── API Keys ─────
+# SERPER_API_KEY = os.getenv("SERPER_API_KEY")
+# GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# if not GEMINI_API_KEY:
+#     raise ValueError("❌ GEMINI_API_KEY environment variable not set")
+# if not SERPER_API_KEY:
+#     raise ValueError("❌ SERPER_API_KEY environment variable not set")
+
+# gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+
+# # ───── Lazy model loading for Railway compatibility ─────
+# image_detector = None
+# text_detector = None
+
+# def load_image_detector():
+#     global image_detector
+#     if image_detector is None:
+#         print("⏳ Зареждане на image detector...")
+#         image_detector = pipeline(
+#             "image-classification",
+#             model="umm-maybe/AI-image-detector"
+#         )
+#         print("✅ Image detector готов")
+#     return image_detector
+
+# def load_text_detector():
+#     global text_detector
+#     if text_detector is None:
+#         print("⏳ Зареждане на text detector...")
+#         text_detector = pipeline(
+#             "text-classification",
+#             model="roberta-base-openai-detector"
+#         )
+#         print("✅ Text detector готов")
+#     return text_detector
+
+
+# # ───── Serper search ─────
+# def search_web(query: str) -> str:
+#     for lang in (("bg", "bg"), ("us", "en")):
+#         gl, hl = lang
+#         for attempt in range(2):
+#             try:
+#                 response = requests.post(
+#                     "https://google.serper.dev/search",
+#                     headers={
+#                         "X-API-KEY": SERPER_API_KEY,
+#                         "Content-Type": "application/json"
+#                     },
+#                     json={
+#                         "q": query,
+#                         "gl": gl,
+#                         "hl": hl,
+#                         "num": 5,
+#                         "lr": "lang_bg" if gl == "bg" else "lang_en"
+#                     },
+#                     timeout=6
+#                 )
+#                 if not response.ok:
+#                     break
+#                 data = response.json()
+#                 snippets = []
+#                 if data.get("answerBox"):
+#                     box = data["answerBox"]
+#                     if box.get("answer"):
+#                         snippets.append(box["answer"])
+#                     if box.get("snippet"):
+#                         snippets.append(box["snippet"])
+#                 for r in data.get("organic", [])[:4]:
+#                     if r.get("snippet"):
+#                         snippets.append(r["snippet"])
+#                 if snippets:
+#                     return " | ".join(snippets)
+#             except requests.Timeout:
+#                 pass
+#             except Exception:
+#                 break
+#     return "Няма намерена информация."
+ 
+
+# # ───── Gemini inference ─────
+# def run_llm(claim: str) -> str:
+#     search_result = search_web(claim)
+#     print(f"📄 Намерено: {search_result[:200]}...")
+#     context = search_result[:700]
+
+#     prompt = f"""Отговаряй САМО на български език.
+
+# Провери следното твърдение като използваш само информацията по-долу.
+
+# Информация: {context}
+
+# Твърдение: {claim}
+
+# Отговорът ти трябва да започва ЗАДЪЛЖИТЕЛНО с "Вярно" или "Невярно", последвано от тире и едно изречение. Забранено е да пишеш "Неясно", "Анализ" или каквото и да е друго в началото.
+# Пример за правилен отговор: Вярно — България е държава в Европа.
+
+# Отговор: """
+
+#     try:
+#         response = gemini_client.models.generate_content(
+#             model="gemini-2.0-flash",
+#             contents=prompt
+#         )
+#         return response.text.strip()
+#     except Exception as e:
+#         return f"Грешка при AI анализ: {str(e)}"
+
+
+# # ───── Endpoints ─────
+
+# @app.get("/")
+# def home():
+#     return {"status": "AI backend работи"}
+
+
+# @app.post("/detect-image")
+# async def detect_image(file: UploadFile = File(...)):
+#     contents = await file.read()
+#     image = Image.open(io.BytesIO(contents)).convert("RGB")
+#     detector = load_image_detector()
+#     loop = asyncio.get_event_loop()
+#     result = await loop.run_in_executor(executor, detector, image)
+#     return {"result": result}
+
+
+# @app.post("/detect-text")
+# async def detect_text(data: TextInput):
+#     detector = load_text_detector()
+#     loop = asyncio.get_event_loop()
+#     result = await loop.run_in_executor(executor, detector, data.text)
+#     return {"result": result}
+
+
+# @app.post("/fact-check")
+# async def fact_check(data: FactInput):
+#     cache_key = hashlib.md5(data.claim.lower().strip().encode()).hexdigest()
+#     if cache_key in fact_cache:
+#         print("✅ Cache hit")
+#         return fact_cache[cache_key]
+#     loop = asyncio.get_event_loop()
+#     result_text = await loop.run_in_executor(executor, run_llm, data.claim)
+#     response = {"result": result_text}
+#     fact_cache[cache_key] = response
+#     return response
+
+
+# # ───── Serve static frontend files ─────
+# frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
+# if os.path.exists(frontend_path):
+#     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
+
+
+
+
+
+
 from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -424,7 +627,7 @@ app = FastAPI()
 # Railway-safe CORS configuration
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:8000"
+    "*" 
 ).split(",")
 
 app.add_middleware(
@@ -450,102 +653,94 @@ executor = ThreadPoolExecutor(max_workers=CPU_CORES)
 fact_cache = {}
 
 # ───── API Keys ─────
+# Ensure these are set in Railway -> Settings -> Variables
 SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 if not GEMINI_API_KEY:
-    raise ValueError("❌ GEMINI_API_KEY environment variable not set")
+    print("⚠️ WARNING: GEMINI_API_KEY not found in environment.")
 if not SERPER_API_KEY:
-    raise ValueError("❌ SERPER_API_KEY environment variable not set")
+    print("⚠️ WARNING: SERPER_API_KEY not found in environment.")
 
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
-# ───── Lazy model loading for Railway compatibility ─────
+# ───── Lazy model loading ─────
 image_detector = None
 text_detector = None
 
 def load_image_detector():
     global image_detector
     if image_detector is None:
-        print("⏳ Зареждане на image detector...")
+        print("⏳ Loading image detector...")
         image_detector = pipeline(
             "image-classification",
             model="umm-maybe/AI-image-detector"
         )
-        print("✅ Image detector готов")
+        print("✅ Image detector ready")
     return image_detector
 
 def load_text_detector():
     global text_detector
     if text_detector is None:
-        print("⏳ Зареждане на text detector...")
+        print("⏳ Loading text detector...")
         text_detector = pipeline(
             "text-classification",
             model="roberta-base-openai-detector"
         )
-        print("✅ Text detector готов")
+        print("✅ Text detector ready")
     return text_detector
 
-
-# ───── Serper search ─────
+# ───── Search ─────
 def search_web(query: str) -> str:
     for lang in (("bg", "bg"), ("us", "en")):
         gl, hl = lang
-        for attempt in range(2):
-            try:
-                response = requests.post(
-                    "https://google.serper.dev/search",
-                    headers={
-                        "X-API-KEY": SERPER_API_KEY,
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "q": query,
-                        "gl": gl,
-                        "hl": hl,
-                        "num": 5,
-                        "lr": "lang_bg" if gl == "bg" else "lang_en"
-                    },
-                    timeout=6
-                )
-                if not response.ok:
-                    break
-                data = response.json()
-                snippets = []
-                if data.get("answerBox"):
-                    box = data["answerBox"]
-                    if box.get("answer"):
-                        snippets.append(box["answer"])
-                    if box.get("snippet"):
-                        snippets.append(box["snippet"])
-                for r in data.get("organic", [])[:4]:
-                    if r.get("snippet"):
-                        snippets.append(r["snippet"])
-                if snippets:
-                    return " | ".join(snippets)
-            except requests.Timeout:
-                pass
-            except Exception:
-                break
+        try:
+            response = requests.post(
+                "https://google.serper.dev/search",
+                headers={
+                    "X-API-KEY": SERPER_API_KEY,
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "q": query,
+                    "gl": gl,
+                    "hl": hl,
+                    "num": 5,
+                    "lr": "lang_bg" if gl == "bg" else "lang_en"
+                },
+                timeout=6
+            )
+            if not response.ok:
+                continue
+            data = response.json()
+            snippets = []
+            if data.get("answerBox"):
+                box = data["answerBox"]
+                if box.get("answer"): snippets.append(box["answer"])
+                if box.get("snippet"): snippets.append(box["snippet"])
+            for r in data.get("organic", [])[:4]:
+                if r.get("snippet"): snippets.append(r["snippet"])
+            
+            if snippets:
+                return " | ".join(snippets)
+        except Exception as e:
+            print(f"Search error: {e}")
+            continue
     return "Няма намерена информация."
- 
 
-# ───── Gemini inference ─────
+# ───── Gemini Analysis ─────
 def run_llm(claim: str) -> str:
     search_result = search_web(claim)
-    print(f"📄 Намерено: {search_result[:200]}...")
-    context = search_result[:700]
+    context = search_result[:1000]
 
     prompt = f"""Отговаряй САМО на български език.
-
-Провери следното твърдение като използваш само информацията по-долу.
+Провери следното твърдение като използваш предоставената информация.
 
 Информация: {context}
-
 Твърдение: {claim}
 
-Отговорът ти трябва да започва ЗАДЪЛЖИТЕЛНО с "Вярно" или "Невярно", последвано от тире и едно изречение. Забранено е да пишеш "Неясно", "Анализ" или каквото и да е друго в началото.
-Пример за правилен отговор: Вярно — България е държава в Европа.
+Инструкция: Отговорът ТРЯБВА да започва с "Вярно" или "Невярно", последвано от тире и едно кратко изречение.
+Пример: Вярно — Кристиано Роналдо е португалски футболист.
 
 Отговор: """
 
@@ -556,15 +751,13 @@ def run_llm(claim: str) -> str:
         )
         return response.text.strip()
     except Exception as e:
-        return f"Грешка при AI анализ: {str(e)}"
-
+        return f"Грешка при AI анализ: Проверете API ключа."
 
 # ───── Endpoints ─────
 
-@app.get("/")
-def home():
-    return {"status": "AI backend работи"}
-
+@app.get("/health")
+def health():
+    return {"status": "ok", "api": "gemini"}
 
 @app.post("/detect-image")
 async def detect_image(file: UploadFile = File(...)):
@@ -575,7 +768,6 @@ async def detect_image(file: UploadFile = File(...)):
     result = await loop.run_in_executor(executor, detector, image)
     return {"result": result}
 
-
 @app.post("/detect-text")
 async def detect_text(data: TextInput):
     detector = load_text_detector()
@@ -583,21 +775,19 @@ async def detect_text(data: TextInput):
     result = await loop.run_in_executor(executor, detector, data.text)
     return {"result": result}
 
-
 @app.post("/fact-check")
 async def fact_check(data: FactInput):
     cache_key = hashlib.md5(data.claim.lower().strip().encode()).hexdigest()
     if cache_key in fact_cache:
-        print("✅ Cache hit")
         return fact_cache[cache_key]
+    
     loop = asyncio.get_event_loop()
     result_text = await loop.run_in_executor(executor, run_llm, data.claim)
     response = {"result": result_text}
     fact_cache[cache_key] = response
     return response
 
-
-# ───── Serve static frontend files ─────
+# Static frontend serving (Optional)
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")

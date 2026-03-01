@@ -1,10 +1,9 @@
 fastapi
 uvicorn
+pydantic
 transformers
-Pillow
-requests
 torch
-python-multipart
-numpy
+pillow
+requests
 google-genai
-aiofiles
+python-multipart
