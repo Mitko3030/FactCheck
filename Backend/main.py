@@ -406,6 +406,7 @@
 
 
 from fastapi import FastAPI, UploadFile, File
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from transformers import pipeline
 from PIL import Image
@@ -420,9 +421,15 @@ from google import genai
 
 app = FastAPI()
 
+# Railway-safe CORS configuration
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:8000"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -443,26 +450,41 @@ executor = ThreadPoolExecutor(max_workers=CPU_CORES)
 fact_cache = {}
 
 # ───── API Keys ─────
-SERPER_API_KEY = "3c6cba844457eff753d0c9cfd8cce7ffbf4b090e"
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise ValueError("❌ GEMINI_API_KEY environment variable not set")
+if not SERPER_API_KEY:
+    raise ValueError("❌ SERPER_API_KEY environment variable not set")
 
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
-print("Зареждане на моделите...")
+# ───── Lazy model loading for Railway compatibility ─────
+image_detector = None
+text_detector = None
 
-# ───── Image detector ─────
-image_detector = pipeline(
-    "image-classification",
-    model="umm-maybe/AI-image-detector"
-)
+def load_image_detector():
+    global image_detector
+    if image_detector is None:
+        print("⏳ Зареждане на image detector...")
+        image_detector = pipeline(
+            "image-classification",
+            model="umm-maybe/AI-image-detector"
+        )
+        print("✅ Image detector готов")
+    return image_detector
 
-# ───── Text detector ─────
-text_detector = pipeline(
-    "text-classification",
-    model="roberta-base-openai-detector"
-)
-
-print("Всички модели са заредени!")
+def load_text_detector():
+    global text_detector
+    if text_detector is None:
+        print("⏳ Зареждане на text detector...")
+        text_detector = pipeline(
+            "text-classification",
+            model="roberta-base-openai-detector"
+        )
+        print("✅ Text detector готов")
+    return text_detector
 
 
 # ───── Serper search ─────
@@ -548,15 +570,17 @@ def home():
 async def detect_image(file: UploadFile = File(...)):
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
+    detector = load_image_detector()
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(executor, image_detector, image)
+    result = await loop.run_in_executor(executor, detector, image)
     return {"result": result}
 
 
 @app.post("/detect-text")
 async def detect_text(data: TextInput):
+    detector = load_text_detector()
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(executor, text_detector, data.text)
+    result = await loop.run_in_executor(executor, detector, data.text)
     return {"result": result}
 
 
@@ -571,3 +595,9 @@ async def fact_check(data: FactInput):
     response = {"result": result_text}
     fact_cache[cache_key] = response
     return response
+
+
+# ───── Serve static frontend files ─────
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
