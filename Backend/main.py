@@ -416,7 +416,7 @@ import os
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from fastapi.middleware.cors import CORSMiddleware
-import google.generativeai as genai
+from google import genai
 
 app = FastAPI()
 
@@ -446,8 +446,7 @@ fact_cache = {}
 SERPER_API_KEY = "3c6cba844457eff753d0c9cfd8cce7ffbf4b090e"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 print("Зареждане на моделите...")
 
@@ -529,7 +528,10 @@ def run_llm(claim: str) -> str:
 Отговор: """
 
     try:
-        response = model.generate_content(prompt)
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
         return response.text.strip()
     except Exception as e:
         return f"Грешка при AI анализ: {str(e)}"
