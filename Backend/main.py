@@ -38,9 +38,13 @@ app = FastAPI()
 # Railway-safe CORS configuration
 ALLOWED_ORIGINS = ["*"]
 
+# main.py
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=[
+        "https://fact-check.up.railway.app", # Your Frontend URL
+        "http://localhost:5500"             # For local testing
+    ],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
