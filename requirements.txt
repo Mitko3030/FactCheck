@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+transformers
+torch
+pillow
+requests
+google-genai
+python-multipart

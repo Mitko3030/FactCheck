@@ -1,0 +1,25 @@
+<svg width="520" height="140" viewBox="0 0 520 140" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00f2fe" />
+      <stop offset="100%" style="stop-color:#4facfe" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(20, 15)">
+    <path d="M5 15 C 5 15, 40 8, 75 15 C 75 60, 65 95, 40 110 C 15 95, 5 60, 5 15 Z" 
+          fill="none" stroke="url(#brightGradient)" stroke-width="7" stroke-linejoin="round"/>
+    
+    <circle cx="40" cy="50" r="19" fill="none" stroke="#FFFFFF" stroke-width="5"/>
+    <path d="M54 64 L67 77" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+    
+    <path d="M31 52 L38 59 L51 44" fill="none" stroke="url(#brightGradient)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <text x="115" y="85" font-family="Arial Black, sans-serif" font-weight="900" font-size="65" letter-spacing="-2">
+    <tspan fill="#FFFFFF">Fact</tspan>
+    <tspan fill="url(#brightGradient)">Check</tspan>
+  </text>
+  
+  <rect x="120" y="105" width="370" height="7" rx="3.5" fill="url(#brightGradient)" />
+</svg>

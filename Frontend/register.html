@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FactCheck — Регистрация</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <section>
+    <div class ="login-box">
+        <form action="">
+            <h2>Регистрирайте се</h2> 
+            <div class="input-box">
+               <span class="icon"><ion-icon name="mail"></ion-icon></span>
+                <input type="email" id="email" required>
+                <label>Имейл</label>
+            </div>
+            <div class="input-box">
+               <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
+                <input type="password" id="password" required>
+                <label>Пароли</label>
+            </div>
+            <button type="button" onclick="registerUser()">Регистрирайте се</button>
+        </form>
+        
+    </div>
+    </section>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCKBJKP6jI27G9cJGWm8YnQb3eqb9atrMk",
+    authDomain: "factcheck-27e4c.firebaseapp.com",
+    projectId: "factcheck-27e4c",
+    storageBucket: "factcheck-27e4c.firebasestorage.app",
+    messagingSenderId: "428640255322",
+    appId: "1:428640255322:web:f604d2352f309e47288763"
+  };
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Register function
+window.registerUser = function () {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      alert("Регистрацията е успешна!");
+      window.location.href = "index.html";
+    })
+    .catch((error) => {
+      alert(error.message);
+    });
+};;
+</script>
+</body>
+</html>
