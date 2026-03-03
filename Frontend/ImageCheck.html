@@ -57,83 +57,120 @@
 
   <script>
     const fileInput = document.getElementById('file-input');
-const dropzone = document.getElementById('dropzone');
-const uploadPrompt = document.getElementById('upload-prompt');
-const previewArea = document.getElementById('preview-area');
-const imgPreview = document.getElementById('img-preview');
-const fileNameDisplay = document.getElementById('file-name-display');
-const resetBtn = document.getElementById('reset-btn');
-const analyzeBtn = document.getElementById('analyze-btn');
+    const dropzone = document.getElementById('dropzone');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const previewArea = document.getElementById('preview-area');
+    const imgPreview = document.getElementById('img-preview');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const resetBtn = document.getElementById('reset-btn');
+    const analyzeBtn = document.getElementById('analyze-btn');
 
     // Мета етикети
-const metaType = document.getElementById('meta-type');
-const metaStatus = document.getElementById('meta-meta');
+    const metaType = document.getElementById('meta-type');
+    const metaStatus = document.getElementById('meta-meta');
 
-fileInput.addEventListener('change', function() {
-    const file = this.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        imgPreview.src = e.target.result;
-        fileNameDisplay.textContent = file.name;
-        uploadPrompt.style.display = 'none';
-        previewArea.style.display = 'block';
-        metaType.textContent = file.type.split('/')[1].toUpperCase();
-      };
-      reader.readAsDataURL(file);
+    fileInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imgPreview.src = e.target.result;
+          fileNameDisplay.textContent = file.name;
+          uploadPrompt.style.display = 'none';
+          previewArea.style.display = 'block';
+
+          const ext = (file.type || '').split('/')[1];
+          metaType.textContent = ext ? ext.toUpperCase() : '—';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function setStatus(text, color) {
+      metaStatus.textContent = text;
+      metaStatus.style.color = color || '';
     }
-});
 
-// СВЪРЗВАНЕ С BACKEND-А
-analyzeBtn.addEventListener('click', async () => {
-    const file = fileInput.files[0];
-    if (!file) return alert("Моля, качете изображение първо!");
+    // СВЪРЗВАНЕ С BACKEND-А
+    analyzeBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return alert("Моля, качете изображение първо!");
 
-        // Начало на UI анимацията
-    dropzone.setAttribute('data-scanning', 'true');
-    analyzeBtn.textContent = "Сканиране за AI...";
-    analyzeBtn.disabled = true;
+      dropzone.setAttribute('data-scanning', 'true');
+      analyzeBtn.textContent = "Сканиране за AI...";
+      analyzeBtn.disabled = true;
 
-    const formData = new FormData();
-    formData.append('file', file);
+      const formData = new FormData();
+      formData.append('file', file);
 
-    try {
+      try {
         const response = await fetch('/api/detect-image', {
-            method: 'POST',
-            body: formData
+          method: 'POST',
+          body: formData
         });
 
-        const data = await response.json();
-        
-        // Резултатът от модела изглежда така: [{label: 'AI', score: 0.99}, ...]
-        // Намираме този с най-висок резултат
-        const topResult = data.result[0]; 
-        const isAI = topResult.label.toLowerCase().includes('ai');
-        const confidence = Math.round(topResult.score * 100);
+        // If server returned HTML/text error, response.json() will throw
+        const ct = response.headers.get("content-type") || "";
+        if (!ct.includes("application/json")) {
+          const t = await response.text();
+          throw new Error(t || `Server error ${response.status}`);
+        }
 
-        // Актуализирай интерфейса с резултата
-        metaStatus.textContent = isAI ? `AI (${confidence}%)` : `Човек (${confidence}%)`;
-        metaStatus.style.color = isAI ? "#ff4d4d" : "#2ea043";
-        
+        const data = await response.json();
+        const arr = data.result || [];
+        const first = arr[0] || {};
+
+        // HF model warming up
+        if (first.label === "LOADING") {
+          setStatus("Моделът се зарежда… опитай пак след 10–20 сек.", "#a07b00");
+          analyzeBtn.textContent = "⏳ Зареждане…";
+          return;
+        }
+
+        // Backend returned an error-like label
+        if (String(first.label || "").startsWith("HF_ERROR") || first.label === "HF_EXCEPTION") {
+          setStatus(`Грешка: ${first.label}`, "#ff4d4d");
+          analyzeBtn.textContent = "❌ Грешка";
+          console.error("HF error detail:", first.detail);
+          return;
+        }
+
+        // pick top score safely
+        let topResult = arr.reduce((best, cur) => {
+          const s1 = typeof best?.score === "number" ? best.score : -1;
+          const s2 = typeof cur?.score === "number" ? cur.score : -1;
+          return s2 > s1 ? cur : best;
+        }, first);
+
+        const labelStr = String(topResult.label || "");
+        const isAI = labelStr.toLowerCase().includes('ai');
+
+        // If score missing, don't show 0%
+        let confidence = (typeof topResult.score === "number")
+          ? Math.round(topResult.score * 100)
+          : null;
+
+        if (confidence === null) confidence = 50;
+
+        setStatus(isAI ? `AI (${confidence}%)` : `Човек (${confidence}%)`, isAI ? "#ff4d4d" : "#2ea043");
         analyzeBtn.textContent = isAI ? "⚠️ Открито AI генерирано" : "✅ Открито човешко";
 
-    } catch (error) {
+      } catch (error) {
         console.error("Error:", error);
         alert("Не може да се свърже със сървъра за AI.");
-    } finally {
+      } finally {
         dropzone.setAttribute('data-scanning', 'false');
         analyzeBtn.disabled = false;
-    }
-});
+      }
+    });
 
-  resetBtn.addEventListener('click', () => {
-    fileInput.value = "";
-    uploadPrompt.style.display = 'flex';
-    previewArea.style.display = 'none';
-    metaStatus.textContent = "—";
-    metaStatus.style.color = "";
-    analyzeBtn.textContent = "Анализирай изображението";
-});
+    resetBtn.addEventListener('click', () => {
+      fileInput.value = "";
+      uploadPrompt.style.display = 'flex';
+      previewArea.style.display = 'none';
+      setStatus("—", "");
+      analyzeBtn.textContent = "Анализирай изображението";
+    });
   </script>
 </body>
 </html>
