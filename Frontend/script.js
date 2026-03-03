@@ -1,5 +1,5 @@
 // API base — relative paths for any domain (local or production)
-const API_BASE = "";
+const API_BASE = "https://factcheck-x0a5.onrender.com";
 //
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -108,9 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            if (!response.ok) throw new Error(`Грешка от сървъра: ${response.status}`);
+            const ct = response.headers.get("content-type") || "";
+            let data;
 
-            const data = await response.json();
+            if (ct.includes("application/json")) data = await response.json();
+            else {
+                const t = await response.text();
+                throw new Error(t || `Грешка от сървъра: ${response.status}`);
+            }
+
+            if (!response.ok) {
+                throw new Error(JSON.stringify(data));
+            }
 
             // Резултат от класификация (изображение или текст)
             if (mode === 'image' || mode === 'text') {
