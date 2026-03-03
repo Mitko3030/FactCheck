@@ -1,5 +1,5 @@
-// API base — relative path so it works anywhere
-const API_BASE = "https://factcheck-noit.up.railway.app";
+// API base — relative paths for any domain (local or production)
+const API_BASE = "";
 //
 document.addEventListener('DOMContentLoaded', () => {
 
