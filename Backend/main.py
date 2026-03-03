@@ -462,33 +462,56 @@ def run_llm(claim: str) -> str:
 # ──────────────────────────────────────────────────────────────────────────────
 # HF Inference API helpers (DO NOT crash the server)
 # ──────────────────────────────────────────────────────────────────────────────
-def _hf_post(url: str, *, data=None, json=None):
-    try:
-        r = requests.post(url, headers=HF_HEADERS, data=data, json=json, timeout=60)
-        ct = (r.headers.get("content-type") or "").lower()
+def normalize_hf_model(s: str) -> str:
+    s = (s or "").strip()
+    # if someone pasted a full URL
+    if s.startswith("http://") or s.startswith("https://"):
+        # keep only path after /models/
+        if "/models/" in s:
+            s = s.split("/models/", 1)[1]
+        else:
+            # fallback: keep last two path parts
+            s = s.rstrip("/").split("/")[-2:]
+            s = "/".join(s)
+    # remove leading "models/"
+    if s.startswith("models/"):
+        s = s[len("models/"):]
+    return s
 
-        # model warming up
-        if r.status_code == 503:
-            return [{"label": "LOADING", "score": 0.0}]
+HF_IMAGE_MODEL = normalize_hf_model(os.getenv("HF_IMAGE_MODEL", "umm-maybe/AI-image-detector"))
+HF_TEXT_MODEL  = normalize_hf_model(os.getenv("HF_TEXT_MODEL", "roberta-base-openai-detector"))
 
-        # any error → return as JSON instead of raising
-        if not r.ok:
-            if "application/json" in ct:
-                return [{"label": f"HF_ERROR_{r.status_code}", "score": 0.0, "detail": r.json()}]
-            return [{"label": f"HF_ERROR_{r.status_code}", "score": 0.0, "detail": r.text}]
-
-        return r.json()
-
-    except Exception as e:
-        return [{"label": "HF_EXCEPTION", "score": 0.0, "detail": str(e)}]
+HF_HEADERS = {
+    "Authorization": f"Bearer {HF_TOKEN}",
+    "Accept": "application/json",
+}
 
 def hf_image_classify(image_bytes: bytes):
-    url = f"https://api-inference.huggingface.co/models/{HF_IMAGE_MODEL}"
-    return _hf_post(url, data=image_bytes)
+    model = HF_IMAGE_MODEL
+    url = f"https://router.huggingface.co/hf-inference/models/{model}"
+    r = requests.post(url, headers=HF_HEADERS, data=image_bytes, timeout=60)
+
+    if r.status_code == 503:
+        return [{"label": "LOADING", "score": 0.0}]
+
+    if not r.ok:
+        # return readable error instead of crashing
+        return [{"label": f"HF_ERROR_{r.status_code}", "score": 0.0, "detail": r.text[:500]}]
+
+    return r.json()
 
 def hf_text_classify(text: str):
-    url = f"https://api-inference.huggingface.co/models/{HF_TEXT_MODEL}"
-    return _hf_post(url, json={"inputs": text})
+    model = HF_TEXT_MODEL
+    url = f"https://router.huggingface.co/hf-inference/models/{model}"
+    r = requests.post(url, headers=HF_HEADERS, json={"inputs": text}, timeout=60)
+
+    if r.status_code == 503:
+        return [{"label": "LOADING", "score": 0.0}]
+
+    if not r.ok:
+        return [{"label": f"HF_ERROR_{r.status_code}", "score": 0.0, "detail": r.text[:500]}]
+
+    return r.json()
 
 # ──────────────────────────────────────────────────────────────────────────────
 # API endpoints
