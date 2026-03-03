@@ -98,7 +98,7 @@ analyzeBtn.addEventListener('click', async () => {
     formData.append('file', file);
 
     try {
-        const response = await fetch('/detect-image', {
+        const response = await fetch('/api/detect-image', {
             method: 'POST',
             body: formData
         });

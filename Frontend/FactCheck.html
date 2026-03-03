@@ -167,7 +167,7 @@
     resultsEl.innerHTML = `<div class="result-card show"><div class="verdict">Проверка…</div><div class="explain">Анализирам...</div></div>`;
 
     try {
-      const resp = await fetch('/fact-check', {
+      const resp = await fetch('/api/fact-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ claim: claim })

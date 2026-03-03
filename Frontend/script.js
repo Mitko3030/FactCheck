@@ -86,14 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const formData = new FormData();
                 formData.append('file', inputData);
 
-                response = await fetch(API_BASE + '/detect-image', {
+                response = await fetch(API_BASE + '/api/detect-image', {
                     method: 'POST',
                     body: formData
                 });
 
             // ДЕТЕКЦИЯ НА AI ТЕКСТ
             } else if (mode === 'text') {
-                response = await fetch(API_BASE + '/detect-text', {
+                response = await fetch(API_BASE + '/api/detect-text', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: inputData })
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // ПРОВЕРКА НА ФАКТИ
             } else {
-                response = await fetch(API_BASE + '/fact-check', {
+                response = await fetch(API_BASE + '/api/fact-check', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ claim: inputData })
