@@ -41,15 +41,11 @@ ALLOWED_ORIGINS = ["*"]
 # main.py
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://fact-check.up.railway.app", # Your Frontend URL
-        "http://localhost:5500"             # For local testing
-    ],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # ───── Schemas ─────
 class TextInput(BaseModel):
     text: str
