@@ -89,10 +89,7 @@ def pick_best_model() -> str | None:
     models = list_gemini_models()
 
     preferred = [
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-        "gemini-2.0-pro",
-        "gemini-pro",
+        "gemini-2.5-flash"
     ]
 
     for p in preferred:
