@@ -489,13 +489,18 @@ HF_HEADERS = {
 def hf_image_classify(image_bytes: bytes):
     model = HF_IMAGE_MODEL
     url = f"https://router.huggingface.co/hf-inference/models/{model}"
-    r = requests.post(url, headers=HF_HEADERS, data=image_bytes, timeout=60)
+
+    headers = {
+        **HF_HEADERS,
+        "Content-Type": "application/octet-stream",  # ✅ IMPORTANT
+    }
+
+    r = requests.post(url, headers=headers, data=image_bytes, timeout=60)
 
     if r.status_code == 503:
         return [{"label": "LOADING", "score": 0.0}]
 
     if not r.ok:
-        # return readable error instead of crashing
         return [{"label": f"HF_ERROR_{r.status_code}", "score": 0.0, "detail": r.text[:500]}]
 
     return r.json()
