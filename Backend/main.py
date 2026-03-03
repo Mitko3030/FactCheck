@@ -162,7 +162,7 @@ def run_llm(claim: str) -> str:
 
     try:
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash",
             contents=prompt
         )
         return response.text.strip()
@@ -256,7 +256,7 @@ if os.path.exists(frontend_path):
 # ──────────────────
 # ✅ Lazy model loading (no timeout on Railway)
 # ✅ Free tier with generous limits
-# ✅ Fast inference (gemini-2.0-flash)
+# ✅ Fast inference (gemini-1.5-flash)
 # ✅ No need for local model downloads
 # ✅ Works reliably in production
 #
