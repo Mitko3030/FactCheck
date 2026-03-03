@@ -4,6 +4,4 @@ pydantic
 requests
 pillow
 google-genai
-transformers
-torch
 python-multipart
