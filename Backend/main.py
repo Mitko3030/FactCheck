@@ -64,12 +64,22 @@ fact_cache = {}
 SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-if not GEMINI_API_KEY:
-    raise ValueError("❌ GEMINI_API_KEY environment variable not set")
+
 if not SERPER_API_KEY:
     raise ValueError("❌ SERPER_API_KEY environment variable not set")
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("❌ GEMINI_API_KEY environment variable not set")
+
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+
+# Try these in order (fast → best)
+MODEL_CANDIDATES = [
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-2.0-pro"
+]
 
 # ───── Lazy model loading ─────
 image_detector = None
@@ -160,14 +170,19 @@ def run_llm(claim: str) -> str:
 
 Отговор: """
 
-    try:
-        response = gemini_client.models.generate_content(
-            model="gemini-1.5-flash-latest",
-            contents=prompt
-        )
-        return response.text.strip()
-    except Exception as e:
-        return f"Грешка при AI анализ: {str(e)}"
+    last_err = None
+    for m in MODEL_CANDIDATES:
+        try:
+            response = gemini_client.models.generate_content(
+                model=m,
+                contents=prompt
+            )
+            return response.text.strip()
+        except Exception as e:
+            last_err = e
+            continue
+
+    return f"Грешка при AI анализ: {str(last_err)}"
 
 # ───── API Endpoints ─────
 
