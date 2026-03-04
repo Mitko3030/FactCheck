@@ -366,7 +366,8 @@ def list_gemini_models() -> list[str]:
 def pick_best_model() -> str | None:
     models = list_gemini_models()
     preferred = [
-        "gemini-2.5-pro"
+        "gemini-2.5-pro",
+        "gemini-2.5-flash"
     ]
     for p in preferred:
         if p in models:
@@ -427,7 +428,7 @@ def search_web(query: str) -> str:
 # Gemini fact-check
 # ──────────────────────────────────────────────────────────────────────────────
 def run_llm(claim: str) -> str:
-    context = search_web(claim)[:1000]
+    context = search_web(claim)[:2000]
 
     prompt = f"""
 Отговаряй САМО на български език.

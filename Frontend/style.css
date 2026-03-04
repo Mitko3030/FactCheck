@@ -36,9 +36,9 @@ html,body{ margin: 0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', 
 /*Log*/
 /* Top Right Auth Bar */
 .auth-nav {
-    position: relative;
-    top: 0;
-    right: 0;
+    position: absolute;
+    top: 1.5rem;
+    right: 1rem;
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -233,7 +233,16 @@ html,body{ margin: 0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', 
     .auth-btn {
         padding: 0.4rem 0.8rem;
     }
+    .mode-nav {
+        flex-direction: column;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+    .nav-btn {
+        width: 80%;
+        max-width: 280px;
+        min-width: 0;
+    }
 }
-
-
-@media (max-width:560px){ .mode-nav{ flex-direction:column; gap:.6rem } .nav-btn{ width:100%; min-width:0 } }
