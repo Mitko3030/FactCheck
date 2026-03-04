@@ -482,3 +482,44 @@ frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
+
+
+
+
+
+#______________________________________
+#TextToSpeech
+#_____________________________________
+from fastapi.responses import StreamingResponse
+from google.cloud import texttospeech
+from io import BytesIO
+
+class TTSInput(BaseModel):
+    text: str
+
+@api.post("/tts")
+def tts(data: TTSInput):
+    text = (data.text or "").strip()
+    if not text:
+        return {"error": "No text"}
+
+    client = texttospeech.TextToSpeechClient()
+
+    synthesis_input = texttospeech.SynthesisInput(text=text)
+
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="bg-BG",
+        name="bg-BG-Standard-A",  # you can change voice later
+    )
+
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+
+    response = client.synthesize_speech(
+        input=synthesis_input,
+        voice=voice,
+        audio_config=audio_config,
+    )
+
+    return StreamingResponse(BytesIO(response.audio_content), media_type="audio/mpeg")
