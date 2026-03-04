@@ -113,6 +113,10 @@
 
         <div class="results" id="results">
           <p class="results-empty">Резултатите ще се появят тук след проверката.</p>
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button onclick="readResult()" style="cursor: pointer; padding: 0.6rem 1rem; border-radius: 8px; border: none; background: #2a7a8a; color: white; font-weight: 700;width: 120px;">🔊 Прочети</button>
+            <button onclick="stopSpeech()" style="cursor: pointer; padding: 0.6rem 1rem; border-radius: 8px; border: none; background: #b52222; color: white; font-weight: 700; width: 120px;">⏹ Спри</button>
+          </div>
         </div>
       </div>
     </section>
@@ -248,6 +252,44 @@
   verifyBtn.addEventListener('click', onVerify);
   claimEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ onVerify(); } });
 })();
+</script>
+
+
+
+
+<script>
+function readResult() {
+  const text = document.getElementById('result')?.innerText;
+  if (!text) {
+    alert('Няма резултат за прочитане');
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1;
+  utter.pitch = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+  const bgVoice = voices.find(v => v.lang && v.lang.startsWith('bg'));
+  if (bgVoice) {
+    utter.voice = bgVoice;
+  } else {
+    utter.lang = 'bg-BG';
+  }
+
+  window.speechSynthesis.speak(utter);
+}
+
+function stopSpeech() {
+  window.speechSynthesis.cancel();
+}
+
+// Ensure voices are loaded
+window.speechSynthesis.onvoiceschanged = () => {
+  window.speechSynthesis.getVoices();
+};
 </script>
 </body>
 </html>
