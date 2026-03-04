@@ -259,20 +259,33 @@
 
 <script>
 function readResult() {
-  const text = document.getElementById('result')?.innerText;
-  if (!text) {
+  const resultsEl = document.getElementById('results');
+  const card = resultsEl.querySelector('.result-card');
+  
+  if (!card) {
+    alert('Няма резултат за прочитане');
+    return;
+  }
+
+  const verdict = card.querySelector('.verdict')?.innerText || '';
+  const confidence = card.querySelector('.confidence')?.innerText || '';
+  const explanation = card.querySelector('.explain')?.innerText || '';
+  
+  const fullText = `${verdict}. ${confidence}. ${explanation}`;
+  
+  if (!fullText.trim()) {
     alert('Няма резултат за прочитане');
     return;
   }
 
   window.speechSynthesis.cancel();
 
-  const utter = new SpeechSynthesisUtterance(text);
+  const utter = new SpeechSynthesisUtterance(fullText);
   utter.rate = 1;
   utter.pitch = 1;
 
   const voices = window.speechSynthesis.getVoices();
-  const bgVoice = voices.find(v => v.lang && v.lang.startsWith('bg'));
+  const bgVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('bg'));
   if (bgVoice) {
     utter.voice = bgVoice;
   } else {
