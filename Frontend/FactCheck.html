@@ -119,8 +119,7 @@
 
     const v = document.createElement('div');
     const normClass = verdict.toLowerCase().includes('вяр') || verdict.toLowerCase().includes('true') ? 'true' : 
-                      verdict.toLowerCase().includes('невяр') || verdict.toLowerCase().includes('false') ? 'false' : 'uncertain';
-    
+                  verdict.toLowerCase().includes('невяр') || verdict.toLowerCase().includes('false') ? 'false' : 'uncertain';
     v.className = 'verdict ' + normClass;
     v.textContent = verdict;
 
