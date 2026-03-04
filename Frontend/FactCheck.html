@@ -1,4 +1,4 @@
-<!doctype html>
+<!-- <!doctype html>
 <html lang="bg">
 <head>
   <meta charset="utf-8" />
@@ -321,6 +321,315 @@ function stopSpeech() {
 window.speechSynthesis.onvoiceschanged = () => {
   window.speechSynthesis.getVoices();
 };
+</script>
+</body>
+</html> -->
+
+
+
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FactCheck — Проверка на Факти</title>
+  <link rel="stylesheet" href="factcheck.css" />
+  <style>
+    .loading-bar{
+      display: none;
+      height: 3px;
+      width: 100%;
+      background: linear-gradient(90deg, #2a7a8a, #1F7A8C);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 10px rgba(42,122,138,0.3);
+    }
+    .loading-bar.active{
+      display: block;
+      animation: progress-animation 1.5s ease-in-out infinite;
+    }
+    .loading-bar::after{
+      content: '';
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes progress-animation{
+      0%{ width: 0%; }
+      50%{ width: 100%; }
+      100%{ width: 100%; }
+    }
+    @keyframes shimmer{
+      0%{ transform: translateX(-100%); }
+      100%{ transform: translateX(100%); }
+    }
+    .result-card{
+      margin-top:16px;
+      border-radius:10px;
+      padding:12px 14px;
+      box-shadow:0 10px 30px rgba(10,20,40,0.06);
+      background:linear-gradient(180deg,#ffffff,#fbfdff);
+      opacity:0; transform:translateY(8px) scale(.995);
+      transition:opacity .28s ease,transform .28s cubic-bezier(.2,.9,.3,1);
+    }
+    .result-card.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+    .verdict{
+      font-weight:700;
+      margin-bottom:6px;
+    }
+    .verdict.true{ color:#127a3c; }
+    .verdict.false{ color:#b52222; }
+    .verdict.uncertain{ color:#a07b00; }
+    .confidence{
+      font-size:13px;
+      color:#334;
+      opacity:.8;
+    }
+    .explain{
+      margin-top:8px;
+      color:#243b4a;
+      opacity:.9;
+      line-height:1.35
+    }
+    .controls-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-top:10px
+    }
+    .btn:disabled{
+      opacity:.6;
+      cursor:not-allowed
+    }
+    .sr-only{
+      position:absolute;
+      left:-9999px;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="back" href="index.html" aria-label="Назад на начало">← Назад</a>
+    <div class="logo">FactCheck</div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="center-col">
+      <div class="card">
+        <h1 class="page-title">Проверка на Факти</h1>
+
+        <label for="claim" class="sr-only">Постави твърдение тук</label>
+        <textarea id="claim" class="claim-input" placeholder="Постави твърдение тук..."></textarea>
+
+        <div class="actions">
+          <button class="btn verify">Проверка</button>
+        </div>
+
+        <div class="loading-bar" id="loading-bar"></div>
+
+        <div class="results" id="results">
+          <p class="results-empty">Резултатите ще се появят тук след проверката.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  const claimEl = document.getElementById('claim');
+  const verifyBtn = document.querySelector('.btn.verify');
+  const resultsEl = document.getElementById('results');
+  const loadingBar = document.getElementById('loading-bar');
+
+  let currentAudio = null;
+  let currentAudioUrl = null;
+
+  function setLoading(isLoading){
+    verifyBtn.disabled = isLoading;
+    if(isLoading) loadingBar.classList.add('active');
+    else loadingBar.classList.remove('active');
+  }
+
+  function stopSpeech(){
+    try {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = null;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function speakViaApi(text){
+    if(!text || !text.trim()){
+      alert("Няма текст за прочитане.");
+      return;
+    }
+
+    try {
+      stopSpeech();
+
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ text })
+      });
+
+      // show server error details if any
+      if (!res.ok) {
+        const errText = await res.text().catch(()=> "");
+        console.error("TTS status:", res.status, errText);
+        throw new Error("TTS error");
+      }
+
+      const blob = await res.blob();
+      currentAudioUrl = URL.createObjectURL(blob);
+
+      currentAudio = new Audio(currentAudioUrl);
+      await currentAudio.play();
+
+      currentAudio.onended = () => {
+        stopSpeech();
+      };
+
+    } catch (error) {
+      console.error("TTS API error:", error);
+      alert("Грешка при прочитане. Моля, опитайте пак.");
+    }
+  }
+
+  function renderResult({verdict, confidence, explanation, claim}){
+    resultsEl.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'result-card';
+
+    const v = document.createElement('div');
+    const lc = (verdict || "").toLowerCase();
+    const normClass =
+      lc.includes('вяр') && !lc.includes('невяр') ? 'true' :
+      lc.includes('невяр') ? 'false' :
+      'uncertain';
+
+    v.className = 'verdict ' + normClass;
+    v.textContent = verdict || "Резултат";
+
+    const c = document.createElement('div');
+    c.className = 'confidence';
+    c.textContent = `Увереност: ${confidence ?? 75}%`;
+
+    const e = document.createElement('div');
+    e.className = 'explain';
+    e.textContent = explanation || "";
+
+    card.appendChild(v);
+    card.appendChild(c);
+    card.appendChild(e);
+
+    const controls = document.createElement('div');
+    controls.className = 'controls-row';
+
+    const readBtn = document.createElement('button');
+    readBtn.className = 'btn';
+    readBtn.textContent = '🔊 Прочети';
+    readBtn.onclick = () => {
+      const claimText = claim || 'неизвестен факт';
+      const confText = (confidence ?? 75);
+      const resultText = `Фактът: ${claimText}. Резултат: ${verdict}. Увереност ${confText} процента. ${explanation}`;
+      speakViaApi(resultText);
+    };
+
+    const stopBtn = document.createElement('button');
+    stopBtn.className = 'btn';
+    stopBtn.textContent = '⏹ Спри';
+    stopBtn.onclick = stopSpeech;
+
+    controls.appendChild(readBtn);
+    controls.appendChild(stopBtn);
+
+    card.appendChild(controls);
+    resultsEl.appendChild(card);
+
+    requestAnimationFrame(()=>{ card.classList.add('show'); });
+  }
+
+  function parseBackendResult(text){
+    const t = (text || "").trim();
+
+    // Your backend uses "Вярно - ..." or "Невярно - ..."
+    // Accept both hyphen "-" and em dash "—"
+    const dashMatch = t.match(/^(Вярно|Невярно|Вярна|Невярна)\s*[-—]\s*(.+)$/i);
+    if (dashMatch) {
+      const verdict = dashMatch[1].trim();
+      const explanation = dashMatch[2].trim();
+      const confidence = explanation.length > 70 ? 85 : 70;
+      return { verdict, confidence, explanation };
+    }
+
+    // fallback: no structured format
+    return { verdict: "Резултат", confidence: 75, explanation: t };
+  }
+
+  async function onVerify(){
+    const claim = claimEl.value.trim();
+    if(!claim){
+      claimEl.focus();
+      return;
+    }
+
+    stopSpeech();
+    setLoading(true);
+
+    resultsEl.innerHTML =
+      `<div class="result-card show">
+        <div class="verdict">Проверка…</div>
+        <div class="explain">Анализирам...</div>
+      </div>`;
+
+    try {
+      const resp = await fetch('/api/fact-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim })
+      });
+
+      if(!resp.ok) throw new Error(`Грешка на сървъра ${resp.status}`);
+
+      const data = await resp.json();
+      const raw = data.result ?? data;
+
+      const parsed = parseBackendResult(typeof raw === 'string' ? raw : String(raw));
+      renderResult({ ...parsed, claim });
+
+    } catch(err) {
+      console.error(err);
+      resultsEl.innerHTML =
+        `<div class="result-card show">
+          <div class="verdict false">Грешка</div>
+          <div class="explain">Неуспешно свързване с бекенда.</div>
+        </div>`;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  verifyBtn.addEventListener('click', onVerify);
+  claimEl.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) onVerify();
+  });
+})();
 </script>
 </body>
 </html>
