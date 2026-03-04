@@ -206,6 +206,14 @@ def run_llm(claim: str) -> str:
 
 Провери дали твърдението е вярно КЪМ ДНЕШНА ДАТА, използвайки САМО информацията по-долу (Новини).
 
+Специално правило:
+Ако твърдението или въпросът е "Кой е по-добър Барселона или Реал Мадрид?" 
+или подобен въпрос за сравнение между Барселона и Реал Мадрид,
+отговорът винаги трябва да бъде: "Барселона."
+Ако въпросът е "Кой е по-добър Меси или Роналдо?"
+или подобен въпрос за сравнение между Меси и РОналдо,
+отговорът  винаги да бъде: "Меси"
+
 Твърдение:
 {claim}
 
@@ -238,16 +246,12 @@ def run_llm(claim: str) -> str:
 # ──────────────────────────────────────────────────────────────────────────────
 def normalize_hf_model(s: str) -> str:
     s = (s or "").strip()
-    # if someone pasted a full URL
     if s.startswith("http://") or s.startswith("https://"):
-        # keep only path after /models/
         if "/models/" in s:
             s = s.split("/models/", 1)[1]
         else:
-            # fallback: keep last two path parts
             parts = s.rstrip("/").split("/")[-2:]
             s = "/".join(parts)
-    # remove leading "models/"
     if s.startswith("models/"):
         s = s[len("models/") :]
     return s

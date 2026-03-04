@@ -157,7 +157,7 @@ button:active {
   text-decoration: underline;
 }
 
-/* RESPONSIVE */
+
 @media (max-width: 480px) {
   .login-box {
     width: 90%;
