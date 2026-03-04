@@ -113,10 +113,6 @@
 
         <div class="results" id="results">
           <p class="results-empty">Резултатите ще се появят тук след проверката.</p>
-          <div style="margin-top: 10px; display: flex; gap: 8px;">
-            <button onclick="readResult()" style="cursor: pointer; padding: 0.6rem 1rem; border-radius: 8px; border: none; background: #2a7a8a; color: white; font-weight: 700;width: 120px;">🔊 Прочети</button>
-            <button onclick="stopSpeech()" style="cursor: pointer; padding: 0.6rem 1rem; border-radius: 8px; border: none; background: #b52222; color: white; font-weight: 700; width: 120px;">⏹ Спри</button>
-          </div>
         </div>
       </div>
     </section>
@@ -283,23 +279,36 @@ function readResult() {
   const utter = new SpeechSynthesisUtterance(fullText);
   utter.rate = 1;
   utter.pitch = 1;
+  utter.lang = 'bg-BG';
 
-  const voices = window.speechSynthesis.getVoices();
-  const bgVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('bg'));
-  if (bgVoice) {
-    utter.voice = bgVoice;
+  // Get voices and find Bulgarian voice
+  let voices = window.speechSynthesis.getVoices();
+  
+  // If voices not loaded, wait for them
+  if (voices.length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      voices = window.speechSynthesis.getVoices();
+      const bgVoice = voices.find(v => v.lang && (v.lang.toLowerCase().startsWith('bg') || v.lang === 'bg-BG' || v.lang === 'bg'));
+      if (bgVoice) {
+        utter.voice = bgVoice;
+      }
+      window.speechSynthesis.speak(utter);
+    };
   } else {
-    utter.lang = 'bg-BG';
+    // Voices already loaded, try to find Bulgarian voice
+    const bgVoice = voices.find(v => v.lang && (v.lang.toLowerCase().startsWith('bg') || v.lang === 'bg-BG' || v.lang === 'bg'));
+    if (bgVoice) {
+      utter.voice = bgVoice;
+    }
+    window.speechSynthesis.speak(utter);
   }
-
-  window.speechSynthesis.speak(utter);
 }
 
 function stopSpeech() {
   window.speechSynthesis.cancel();
 }
 
-// Ensure voices are loaded
+// Preload voices on page load
 window.speechSynthesis.onvoiceschanged = () => {
   window.speechSynthesis.getVoices();
 };
