@@ -137,8 +137,8 @@
               return s2 > s1 ? cur : best;
           }, first);
 
-          const labelStr = String(topResult.label || "");
-          const isAI = labelStr.toLowerCase().includes('ai');
+          const labelStr = String(topResult.label || "").toUpperCase();
+          const isAI = labelStr.includes('FAKE') || labelStr.includes('AI');
 
           let confidence = (typeof topResult.score === "number")
               ? Math.round(topResult.score * 100)
