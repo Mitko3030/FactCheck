@@ -381,7 +381,7 @@ def normalize_hf_model(s: str) -> str:
     return s
 
 
-HF_IMAGE_MODEL = normalize_hf_model(os.getenv("HF_IMAGE_MODEL", "umm-maybe/AI-image-detector"))
+HF_IMAGE_MODEL = normalize_hf_model(os.getenv("HF_IMAGE_MODEL", "dima806/deepfake_vs_real_image_detection"))
 HF_TEXT_MODEL = normalize_hf_model(os.getenv("HF_TEXT_MODEL", "roberta-base-openai-detector"))
 
 HF_HEADERS = {
